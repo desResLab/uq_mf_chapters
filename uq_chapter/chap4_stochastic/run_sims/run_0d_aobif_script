@@ -1,0 +1,78 @@
+#!/bin/bash
+
+# Name of your job
+#SBATCH --job-name=aobif_0d
+#SBATCH --partition=amarsden
+
+# Specify the name of the output file. The %j specifies the job ID
+#SBATCH --output=aobif_0d.o%j
+
+# Specify the name of the error file. The %j specifies the job ID
+#SBATCH --error=aobif_0d.e%j
+
+# The walltime you require for your job
+#SBATCH --time=48:00:00
+
+# Job priority. Leave as normal for now
+#SBATCH --qos=normal
+
+# Number of nodes are you requesting for your job. You can have 24 processors per node
+#SBATCH --nodes=1
+
+# Amount of memory you require per node. The default is 4000 MB per node
+#SBATCH --mem=32000
+
+# Number of processors per node
+#SBATCH --ntasks-per-node=24
+
+# Send an email to this address when your job starts and finishes
+#SBATCH --mail-user=azanoni@stanford.edu
+#SBATCH --mail-type=begin
+#SBATCH --mail-type=end
+
+# Name of the executable you want to run on the cluster
+module purge
+module load devel
+module load openmpi
+module load openblas
+module load system
+module load x11
+module load mesa
+module load gcc/12.1.0
+module load swig
+module load boost
+module load armadillo
+
+method='uni'
+N=512
+s_tot=4
+
+echo Start time: $(date)
+
+# create the RCR values using a specified method (uni or lhs) and number of samples
+# python create_rcr_vals.py $method $N $s_tot
+
+# divide into multiple jobs
+
+# create input files for s experiments, each with N samples
+#for s in {0..3}
+#do
+#    for iter in {0..511}
+#    do
+#        # for each experiment, create samples of the RCR values
+#        python create_aobif_zerod.py $iter $s $method
+#    done
+#done
+
+# run the simulations
+for s in {0..3}
+do
+    for iter in {0..511}
+    do
+        # for each experiment and sample, run the simulation
+        cd -- "/scratch/users/azanoni/aobif_sims/zerod_sims/${method}_exp_$s/sim_$iter/"
+        /scratch/users/azanoni/code/svzerodsolver ./aobif_${iter}.json ./aobif_${iter}.csv
+    done
+done
+
+echo End time: $(date)
