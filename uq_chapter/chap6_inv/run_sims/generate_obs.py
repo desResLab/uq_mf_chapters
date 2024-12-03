@@ -6,6 +6,8 @@ import numpy as np
 import scipy.io as sio
 import torch
 
+dirpath = '/Users/chloe/Documents/Stanford/ME398_Spring/marsden_uq/uq_mf_chapters/uq_chapter/chap6_inv/'
+
 Rp_bounds = 0.5
 C_bounds  = 0.5
 Rd_bounds = 0.5
@@ -20,13 +22,13 @@ C  = np.random.uniform(C-C_bounds*C,    C+C_bounds*C)
 Rd = np.random.uniform(Rd-Rd_bounds*Rd, Rd+Rd_bounds*Rd)
 
 # save the RCR values
-sio.savemat('../data/x_obs.mat', {'Rp':Rp, 'C':C, 'Rd':Rd})
+sio.savemat(dirpath+'data/x_obs.mat', {'Rp':Rp, 'C':C, 'Rd':Rd})
 
 #%% Generate svZeroDSolver input file
 import pandas as pd
 
 # create the json file and open it
-svzerod_json = open('../data/aobif_obs.json','w')
+svzerod_json = open(dirpath+'data/aobif_obs.json','w')
 
 # distal pressure used for RCR boundary conditions
 P_dist = 4000 # dynes/cm^2
@@ -168,9 +170,19 @@ svzerod_json.write(indent+']\n')
 svzerod_json.write('}'+'\n')
 svzerod_json.close()
 
+#%% Run svZeroDSolver
+
+import os
+
+json_file = dirpath+'data/aobif_obs.json'
+csv_file  = dirpath+'data/aobif_obs.csv'
+
+# run the simulation
+os.system('/Users/chloe/Documents/Stanford/ME398_Winter/Release/svzerodsolver '+json_file+' '+csv_file)
+
 #%% After running svZeroDSolver
 
-filename = '../data/aobif_obs.csv'
+filename = dirpath+'data/aobif_obs.csv'
 
 def get_QOI_0D(filename, QOI_name=None):
 
@@ -198,7 +210,7 @@ def get_QOI_0D(filename, QOI_name=None):
     return torch.tensor([[min(pressure_aorta)], [max(pressure_aorta)]])
 
 pressure = get_QOI_0D(filename)
-eps      = np.random.normal(0, 1000) # noise
+eps      = np.random.normal(0, 2000) # noise
 pressure = pressure + eps # with added noise
 
 sio.savemat('../data/y_obs.mat', {'y_obs':pressure, 'epsilon':eps})

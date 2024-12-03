@@ -75,14 +75,14 @@ y_obs    = s['y_obs']
 x_mean       = torch.tensor([[Rp_orig],[C_orig],[Rd_orig]]).float()
 
 def p_prior(x):
-    cov_matrix   = np.array([[(Rp_orig/6)**2, 0, 0], [0, (C_orig/6)**2, 0], [0, 0, (Rd_orig/6)**2]])
+    cov_matrix   = np.array([[(Rp_orig/8)**2, 0, 0], [0, (C_orig/8)**2, 0], [0, 0, (Rd_orig/8)**2]])
     inv_cov      = np.linalg.inv(cov_matrix)
     det_cov      = np.linalg.det(cov_matrix)
     p_prior      = (2*np.pi)**(-3/2) * det_cov**(-1/2) * np.exp(-0.5*np.matmul(np.matmul(np.transpose(x-x_mean),inv_cov),x-x_mean))
     return p_prior
 
 # construct likelihood
-sigma_noise    = 1000
+sigma_noise    = 2000
 
 def p_likelihood(y):
     cov_matrix   = np.array([[(sigma_noise)**2, 0], [0, (sigma_noise)**2]])
@@ -233,5 +233,3 @@ sio.savemat(zerod_filepath+'marginal_CRp.mat',
              'prior_Rp': prior_Rp.detach().numpy(),
              'prior_C': prior_C.detach().numpy(),
              'prior_Rd': prior_Rd.detach().numpy()})
-
-# %%
