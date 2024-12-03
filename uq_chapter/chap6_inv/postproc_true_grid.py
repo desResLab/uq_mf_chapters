@@ -82,7 +82,7 @@ def p_prior(x):
     return p_prior
 
 # construct likelihood
-sigma_noise    = 2000
+sigma_noise    = 8000
 
 def p_likelihood(y):
     cov_matrix   = np.array([[(sigma_noise)**2, 0], [0, (sigma_noise)**2]])
@@ -108,7 +108,7 @@ posterior = grid_posterior / torch.sum(grid_posterior.flatten()*(Rp_grid[1]-Rp_g
 prior     = grid_prior / torch.sum(grid_prior.flatten()*(Rp_grid[1]-Rp_grid[0])*(C_grid[1]-C_grid[0])*(Rd_grid[1]-Rd_grid[0]))
 
 posterior = np.reshape(posterior, (n_points, n_points, n_points))
-prior = np.reshape(prior, (n_points, n_points, n_points))
+prior     = np.reshape(prior, (n_points, n_points, n_points))
 
 # %% Compute the marginal distributions
 # dim = 1 is Rp, dim = 0 is C, dim = 2 is Rd

@@ -8,9 +8,11 @@ import torch
 
 dirpath = '/Users/chloe/Documents/Stanford/ME398_Spring/marsden_uq/uq_mf_chapters/uq_chapter/chap6_inv/'
 
-Rp_bounds = 0.5
-C_bounds  = 0.5
-Rd_bounds = 0.5
+sigma_noise = 8000
+
+Rp_bounds = 0.3
+C_bounds  = 0.3
+Rd_bounds = 0.3
 
 # load the RCR values
 Rp = 6.8123e2
@@ -210,7 +212,7 @@ def get_QOI_0D(filename, QOI_name=None):
     return torch.tensor([[min(pressure_aorta)], [max(pressure_aorta)]])
 
 pressure = get_QOI_0D(filename)
-eps      = np.random.normal(0, 2000) # noise
+eps      = np.random.normal(0, sigma_noise) # noise
 pressure = pressure + eps # with added noise
 
 sio.savemat('../data/y_obs.mat', {'y_obs':pressure, 'epsilon':eps})
