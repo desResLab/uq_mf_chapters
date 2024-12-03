@@ -213,6 +213,7 @@ def get_QOI_0D(filename, QOI_name=None):
 
 pressure = get_QOI_0D(filename)
 eps      = np.random.normal(0, sigma_noise) # noise
+
 pressure = pressure + eps # with added noise
 
 sio.savemat('../data/y_obs.mat', {'y_obs':pressure, 'epsilon':eps})

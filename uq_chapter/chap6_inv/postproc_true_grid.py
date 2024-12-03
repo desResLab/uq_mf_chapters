@@ -68,11 +68,26 @@ Rp_mesh, C_mesh, Rd_mesh = np.meshgrid(Rp_grid, C_grid, Rd_grid)
 
 #%% Construct the posterior distribution
 
-s        = sio.loadmat('./data/y_obs.mat')
-y_obs    = s['y_obs']
+# construct likelihood
+# sigma_noise_max    = 5000
+# sigma_noise_min    = sigma_noise_max / 10
 
+# sigma_noise_max    = 6993.88
+# sigma_noise_min    = 4050.9
+
+s               = sio.loadmat('./data/test3/y_obs.mat')
+y_obs           = s['y_obs']
+epsilon         = s['epsilon']
+y_no_noise      = y_obs - epsilon
+sigma_noise_max = y_no_noise[1][0] * 0.01
+sigma_noise_min = y_no_noise[0][0] * 0.01
+y               = y_obs - epsilon + [[np.random.normal(0, sigma_noise_min)],[np.random.normal(0, sigma_noise_max)]]
+
+sio.savemat('./data/y_obs.mat', {'y_obs':y, 'y':y_no_noise, 'sigma_noise_min':sigma_noise_min, 'sigma_noise_max':sigma_noise_max})
+
+#%%
 # construct prior
-x_mean       = torch.tensor([[Rp_orig],[C_orig],[Rd_orig]]).float()
+x_mean          = torch.tensor([[Rp_orig],[C_orig],[Rd_orig]]).float()
 
 def p_prior(x):
     cov_matrix   = np.array([[(Rp_orig/8)**2, 0, 0], [0, (C_orig/8)**2, 0], [0, 0, (Rd_orig/8)**2]])
@@ -81,11 +96,8 @@ def p_prior(x):
     p_prior      = (2*np.pi)**(-3/2) * det_cov**(-1/2) * np.exp(-0.5*np.matmul(np.matmul(np.transpose(x-x_mean),inv_cov),x-x_mean))
     return p_prior
 
-# construct likelihood
-sigma_noise    = 8000
-
 def p_likelihood(y):
-    cov_matrix   = np.array([[(sigma_noise)**2, 0], [0, (sigma_noise)**2]])
+    cov_matrix   = np.array([[(sigma_noise_min)**2, 0], [0, (sigma_noise_max)**2]])
     inv_cov      = np.linalg.inv(cov_matrix)
     det_cov      = np.linalg.det(cov_matrix)
     p_likelihood = (2*np.pi)**(-3/2) * det_cov**(-1/2) * np.exp(-0.5*np.matmul(np.matmul(np.transpose(y-y_obs),inv_cov),y-y_obs))
@@ -233,3 +245,5 @@ sio.savemat(zerod_filepath+'marginal_CRp.mat',
              'prior_Rp': prior_Rp.detach().numpy(),
              'prior_C': prior_C.detach().numpy(),
              'prior_Rd': prior_Rd.detach().numpy()})
+
+# %%

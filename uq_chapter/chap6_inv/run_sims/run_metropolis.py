@@ -10,32 +10,28 @@ total_size  = int(sys.argv[1])
 burnin_size = int(sys.argv[2])
 dim = 3
 
-# Observation with noise (wall shear stress)
-obs_file    = sio.loadmat(file_path + 'y_obs.mat')
-y_obs       = obs_file['y_obs']
+# Load observation with noise (min pressure, max pressure)
+s               = sio.loadmat('./data/y_obs.mat')
+sigma_noise_max = s['sigma_noise_max']
+sigma_noise_min = s['sigma_noise_min']
+y_obs           = s['y_obs']
 
-# [Rp, Rd, C]
-Rp = 6.8123e2
-Rd = 3.1013e4
-C  = 3.6664e-5
-#x_avg = np.array([6.8123e2, 3.1013e4, 3.6664e-5])
-x_avg = np.array([Rp, Rd, C])
+# [Rp, Rd, C] mean values
+Rp     = 6.8123e2
+Rd     = 3.1013e4
+C      = 3.6664e-5
+x_avg  = np.array([Rp, Rd, C])
 x_init = np.array([np.random.uniform(Rp-0.5*Rp, Rp+0.5*Rp), np.random.uniform(Rd-0.5*Rd, Rd+0.5*Rd), np.random.uniform(C-0.5*C, C+0.5*C)])
 
-# Prior distribution
-
-sigma_prior = 0.3
-sigma_noise = 1000 # this is chosen for the pressure
-
 def p_prior(x):
-    cov_matrix   = np.array([[(x_avg[0]/6)**2, 0, 0], [0, (x_avg[1]/6)**2, 0], [0, 0, (x_avg[2]/6)**2]])
+    cov_matrix   = np.array([[(x_avg[0]/8)**2, 0, 0], [0, (x_avg[1]/8)**2, 0], [0, 0, (x_avg[2]/8)**2]])
     inv_cov      = np.linalg.inv(cov_matrix)
     det_cov      = np.linalg.det(cov_matrix)
     p_prior      = (2*np.pi)**(-3/2) * det_cov**(-1/2) * np.exp(-0.5*np.matmul(np.matmul(np.transpose(x-x_avg),inv_cov),x-x_avg))
     return p_prior
 
 def p_likelihood(y):
-    cov_matrix   = np.array([[(sigma_noise)**2, 0], [0, (sigma_noise)**2]])
+    cov_matrix   = np.array([[(sigma_noise_min)**2, 0], [0, (sigma_noise_max)**2]])
     inv_cov      = np.linalg.inv(cov_matrix)
     det_cov      = np.linalg.det(cov_matrix)
     p_likelihood = (2*np.pi)**(-3/2) * det_cov**(-1/2) * np.exp(-0.5*np.matmul(np.matmul(np.transpose(y-y_obs),inv_cov),y-y_obs))
