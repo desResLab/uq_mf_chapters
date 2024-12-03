@@ -24,8 +24,8 @@ r_aorta = 1.019478928
 
 # quantity of interest
 vessel = 'aorta'
-prober = 'avg'
-what   = 'flow'
+prober = 'min'
+what   = 'pressure'
 name   = what+':'+vessel+':'+prober
 
 # currently we are choosing the interpolated data
@@ -41,9 +41,12 @@ zerod_data      = np.genfromtxt(zerod_filename, usecols=range(1,n_points**3+1), 
 
 # pull out the QOI of interest
 idxs = np.nonzero(zerod_var_names == name)[0]
-qoi  = zerod_data[idxs,:]
-qoi  = 4 * mu * qoi / (np.pi * r_aorta**3)
-qoi  = qoi.reshape(n_points, n_points, n_points)
+qoi_min  = zerod_data[idxs,:]
+qoi_min  = qoi_min.reshape(n_points, n_points, n_points)
+
+idxs = np.nonzero(zerod_var_names == what+':'+vessel+':max')[0]
+qoi_max  = zerod_data[idxs,:]
+qoi_max  = qoi_max.reshape(n_points, n_points, n_points)
 
 #%% Create relevant meshgrids for posterior plots
 
@@ -65,34 +68,41 @@ Rp_mesh, C_mesh, Rd_mesh = np.meshgrid(Rp_grid, C_grid, Rd_grid)
 
 #%% Construct the posterior distribution
 
-s        = sio.loadmat('/Users/chloe/Desktop/invprob/y_obs.mat')
+s        = sio.loadmat('./data/y_obs.mat')
 y_obs    = s['y_obs']
-y_obs    = torch.Tensor(y_obs)
 
 # construct prior
 x_mean       = torch.tensor([[Rp_orig],[C_orig],[Rd_orig]]).float()
-cov_matrix   = torch.tensor([[(Rp_orig/6)**2, 0, 0], [0, (C_orig/6)**2, 0], [0, 0, (Rd_orig/6)**2]])
-inv_cov      = torch.inverse(cov_matrix).float()
-det_cov      = torch.det(cov_matrix).float()
-P_prior      = lambda x: (2*np.pi)**(-3/2) * det_cov**(-1/2) * \
-                    torch.exp(-0.5*torch.mm(torch.mm(torch.transpose((x-x_mean),1,0).float(),inv_cov),(x-x_mean).float()))
+
+def p_prior(x):
+    cov_matrix   = np.array([[(Rp_orig/6)**2, 0, 0], [0, (C_orig/6)**2, 0], [0, 0, (Rd_orig/6)**2]])
+    inv_cov      = np.linalg.inv(cov_matrix)
+    det_cov      = np.linalg.det(cov_matrix)
+    p_prior      = (2*np.pi)**(-3/2) * det_cov**(-1/2) * np.exp(-0.5*np.matmul(np.matmul(np.transpose(x-x_mean),inv_cov),x-x_mean))
+    return p_prior
 
 # construct likelihood
-sigma_noise    = 0.0005
-P_likelihood   = lambda y: torch.exp(-(y_obs - y)**2/(2*sigma_noise**2))
+sigma_noise    = 1000
+
+def p_likelihood(y):
+    cov_matrix   = np.array([[(sigma_noise)**2, 0], [0, (sigma_noise)**2]])
+    inv_cov      = np.linalg.inv(cov_matrix)
+    det_cov      = np.linalg.det(cov_matrix)
+    p_likelihood = (2*np.pi)**(-3/2) * det_cov**(-1/2) * np.exp(-0.5*np.matmul(np.matmul(np.transpose(y-y_obs),inv_cov),y-y_obs))
+    return p_likelihood
 
 # construct posterior
-P_posterior    = lambda x,y: P_likelihood(y)*P_prior(x)
+P_posterior    = lambda x,y: p_likelihood(y)*p_prior(x)
 
-grid_posterior = torch.zeros((qoi.shape[0], qoi.shape[1], qoi.shape[2]))
-grid_prior     = torch.zeros((qoi.shape[0], qoi.shape[1], qoi.shape[2]))
+grid_posterior = torch.zeros((qoi_min.shape[0], qoi_min.shape[1], qoi_min.shape[2]))
+grid_prior     = torch.zeros((qoi_min.shape[0], qoi_min.shape[1], qoi_min.shape[2]))
 
-for i in tqdm(np.arange(qoi.shape[0])):
-    for j in np.arange(qoi.shape[1]):
-        for k in np.arange(qoi.shape[2]):
+for i in tqdm(np.arange(qoi_min.shape[0])):
+    for j in np.arange(qoi_min.shape[1]):
+        for k in np.arange(qoi_min.shape[2]):
             theta = torch.tensor([[Rp_mesh[i,j,k]], [C_mesh[i,j,k]], [Rd_mesh[i,j,k]]])
-            grid_posterior[i,j,k] = P_posterior(theta, torch.Tensor([qoi[i,j,k]]))
-            grid_prior[i,j,k] = P_prior(theta)
+            grid_posterior[i,j,k] = P_posterior(theta, torch.Tensor([[qoi_min[i,j,k]], [qoi_max[i,j,k]]]))
+            grid_prior[i,j,k] = p_prior(theta)
 
 posterior = grid_posterior / torch.sum(grid_posterior.flatten()*(Rp_grid[1]-Rp_grid[0])*(C_grid[1]-C_grid[0])*(Rd_grid[1]-Rd_grid[0]))
 prior     = grid_prior / torch.sum(grid_prior.flatten()*(Rp_grid[1]-Rp_grid[0])*(C_grid[1]-C_grid[0])*(Rd_grid[1]-Rd_grid[0]))

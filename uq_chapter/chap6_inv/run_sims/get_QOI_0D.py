@@ -19,12 +19,10 @@ def get_QOI_0D(filename, QOI_name=None):
     zerod_data = {}
     for name in vessel_names:
         idxs = np.nonzero(var_names == name)[0]
-        zerod_data[name+':flow_out']     = (data[idxs,1])[-steps_per_cycle:]
-        zerod_data[name+':pressure_out'] = (data[idxs,3])[-steps_per_cycle:]
+        # pressure at the aortic inlet
+        zerod_data[name+':pressure_in'] = (data[idxs,2])[-steps_per_cycle:]
 
-    flow_aorta = zerod_data['aorta:flow_out']
-    wss_avg    = 4*mu*np.mean(flow_aorta)/(np.pi*r**3)
-    #wss_max   = 4*mu*np.max(flow_aorta)/(np.pi*r**3)
-    #wss_min   = 4*mu*np.min(flow_aorta)/(np.pi*r**3)
+    pressure_max = max(zerod_data['aorta:pressure_in'])
+    pressure_min = min(zerod_data['aorta:pressure_in'])
 
-    return wss_avg
+    return pressure_max, pressure_min

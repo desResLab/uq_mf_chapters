@@ -4,6 +4,7 @@
 
 import numpy as np
 import scipy.io as sio
+import torch
 
 Rp_bounds = 0.5
 C_bounds  = 0.5
@@ -19,13 +20,13 @@ C  = np.random.uniform(C-C_bounds*C,    C+C_bounds*C)
 Rd = np.random.uniform(Rd-Rd_bounds*Rd, Rd+Rd_bounds*Rd)
 
 # save the RCR values
-sio.savemat('x_obs.mat', {'Rp':Rp, 'C':C, 'Rd':Rd})
+sio.savemat('../data/x_obs.mat', {'Rp':Rp, 'C':C, 'Rd':Rd})
 
 #%% Generate svZeroDSolver input file
 import pandas as pd
 
 # create the json file and open it
-svzerod_json = open('aobif_obs.json','w')
+svzerod_json = open('../data/aobif_obs.json','w')
 
 # distal pressure used for RCR boundary conditions
 P_dist = 4000 # dynes/cm^2
@@ -169,7 +170,7 @@ svzerod_json.close()
 
 #%% After running svZeroDSolver
 
-filename = 'aobif_obs.csv'
+filename = '../data/aobif_obs.csv'
 
 def get_QOI_0D(filename, QOI_name=None):
 
@@ -190,19 +191,16 @@ def get_QOI_0D(filename, QOI_name=None):
     zerod_data = {}
     for name in vessel_names:
         idxs = np.nonzero(var_names == name)[0]
-        zerod_data[name+':flow_out'] = (data[idxs,1])[-steps_per_cycle:]
-        zerod_data[name+':pressure_out'] = (data[idxs,3])[-steps_per_cycle:]
+        zerod_data[name+':pressure_in'] = (data[idxs,2])[-steps_per_cycle:]
 
-    flow_aorta = zerod_data['aorta:flow_out']
+    pressure_aorta = zerod_data['aorta:pressure_in']
 
-    wss_avg = 4*mu*np.mean(flow_aorta)/(np.pi*r**3)
-    wss_max = 4*mu*np.max(flow_aorta)/(np.pi*r**3)
-    wss_min = 4*mu*np.min(flow_aorta)/(np.pi*r**3)
+    return torch.tensor([[min(pressure_aorta)], [max(pressure_aorta)]])
 
-    return wss_avg
+pressure = get_QOI_0D(filename)
+eps      = np.random.normal(0, 1000) # noise
+pressure = pressure + eps # with added noise
 
-wss_avg = get_QOI_0D(filename)
-eps     = np.random.normal(0, 0.0005) # noise
-wss_avg = wss_avg + eps # with added noise
+sio.savemat('../data/y_obs.mat', {'y_obs':pressure, 'epsilon':eps})
 
-sio.savemat('y_obs.mat', {'y_obs':wss_avg})
+# %%

@@ -40,7 +40,7 @@ plt.rcParams.update({
     "font.size": 18
 })
 
-for i in range(6,6+1): #range(1,6+1):
+for i in range(1,6+1): #range(6,6+1) for the paper
 
     print(i)
 

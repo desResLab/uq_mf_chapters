@@ -4,8 +4,8 @@ import pandas as pd
 
 # which QOI to plot
 vessel    = 'aorta' # 'aorta' or 'left_iliac' or 'right_iliac'
-prober    = 'avg'   # 'max' or 'min' or 'avg'
-what      = 'flow'  # 'flow' or 'pressure'
+prober    = 'min'   # 'max' or 'min' or 'avg'
+what      = 'pressure'  # 'flow' or 'pressure'
 
 # number of points in N x N x N grid
 N         = 32
@@ -41,16 +41,18 @@ var_names = np.genfromtxt(filename, dtype='U', usecols=0, skip_header=1, delimit
 # load the data
 data     = np.genfromtxt(filename, usecols=range(1,N**3+1), skip_header=1, delimiter=',')
 
-# properties of blood/vessel
-mu      = 0.04
-r_aorta = 1.019478928
-
 # pull out the QOI of interest
 idxs     = np.nonzero(var_names == name)[0]
 qoi      = data[idxs,:]
 
-qoi  = 4 * mu * qoi / (np.pi * r_aorta**3)
-qoi  = qoi.reshape(n_points, n_points, n_points)
+if what == 'pressure':
+    qoi = qoi / 1333 # convert to mmHg
+
+# wall shear stress calculation
+# mu      = 0.04        # blood viscosity
+# r_aorta = 1.019478928 # radius of aorta
+# qoi  = 4 * mu * qoi / (np.pi * r_aorta**3)
+# qoi  = qoi.reshape(n_points, n_points, n_points)
 
 #%% Plot Rp and C
 
