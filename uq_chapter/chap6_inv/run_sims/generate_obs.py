@@ -208,14 +208,24 @@ def get_QOI_0D(filename, QOI_name=None):
         zerod_data[name+':pressure_in'] = (data[idxs,2])[-steps_per_cycle:]
 
     pressure_aorta = zerod_data['aorta:pressure_in']
+    import matplotlib.pyplot as plt
+    plt.plot(pressure_aorta)
+    print(np.mean(pressure_aorta))
+    print(np.max(pressure_aorta))
+    print(np.min(pressure_aorta))
 
-    return torch.tensor([[min(pressure_aorta)], [max(pressure_aorta)]])
+    return torch.tensor([[min(pressure_aorta)], [max(pressure_aorta)], [np.mean(pressure_aorta)]])
 
-pressure = get_QOI_0D(filename)
-eps      = np.random.normal(0, sigma_noise) # noise
+y_no_noise = get_QOI_0D(filename)
 
-pressure = pressure + eps # with added noise
+scaling_factor   = [0.01, 0.01, 0.01]
 
-sio.savemat('../data/y_obs.mat', {'y_obs':pressure, 'epsilon':eps})
+sigma_noise_min  = y_no_noise[0][0]*scaling_factor[0]
+sigma_noise_max  = y_no_noise[1][0]*scaling_factor[1]
+sigma_noise_mean = y_no_noise[2][0]*scaling_factor[2]
 
-# %%
+epsilon = [[np.random.normal(0, sigma_noise_min)], [np.random.normal(0, sigma_noise_max)], [np.random.normal(0, sigma_noise_mean)]]
+
+y_obs = [[y_no_noise[0][0] + epsilon[0][0]], [y_no_noise[1][0] + epsilon[1][0]], [y_no_noise[2][0] + epsilon[2][0]]]
+
+sio.savemat('../data/y_obs.mat', {'y_obs':y_obs, 'epsilon':epsilon, 'y_no_noise':y_no_noise})

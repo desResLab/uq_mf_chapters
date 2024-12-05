@@ -48,6 +48,10 @@ idxs = np.nonzero(zerod_var_names == what+':'+vessel+':max')[0]
 qoi_max  = zerod_data[idxs,:]
 qoi_max  = qoi_max.reshape(n_points, n_points, n_points)
 
+idxs = np.nonzero(zerod_var_names == what+':'+vessel+':avg')[0]
+qoi_mean = zerod_data[idxs,:]
+qoi_mean = qoi_mean.reshape(n_points, n_points, n_points)
+
 #%% Create relevant meshgrids for posterior plots
 
 # original [Rp, C, Rd] values
@@ -59,9 +63,16 @@ Rd_orig  = 3.1013e4
 RCR_bounds_grid = np.array([0.5, 0.5, 0.5])
 
 # # Create linspace of [Rp, C, Rd] values to pull out the first 20 points
-Rp_grid = np.linspace(Rp_orig-Rp_orig*RCR_bounds_grid[0], Rp_orig+Rp_orig*RCR_bounds_grid[0], n_points)
-C_grid  = np.linspace(C_orig-C_orig*RCR_bounds_grid[1], C_orig+C_orig*RCR_bounds_grid[1], n_points)
-Rd_grid = np.linspace(Rd_orig-Rd_orig*RCR_bounds_grid[2], Rd_orig+Rd_orig*RCR_bounds_grid[2], n_points)
+Rp_low  = Rp_orig - Rp_orig*RCR_bounds_grid[0]
+Rp_high = Rp_orig + Rp_orig*RCR_bounds_grid[0]
+C_low   = C_orig - C_orig*RCR_bounds_grid[1]
+C_high  = C_orig + C_orig*RCR_bounds_grid[1]
+Rd_low  = Rd_orig - Rd_orig*RCR_bounds_grid[2]
+Rd_high = Rd_orig + Rd_orig*RCR_bounds_grid[2]
+
+Rp_grid = np.linspace(Rp_low, Rp_high, n_points)
+C_grid  = np.linspace(C_low, C_high, n_points)
+Rd_grid = np.linspace(Rd_low, Rd_high, n_points)
 
 # Create meshgrid
 Rp_mesh, C_mesh, Rd_mesh = np.meshgrid(Rp_grid, C_grid, Rd_grid)
@@ -75,32 +86,45 @@ Rp_mesh, C_mesh, Rd_mesh = np.meshgrid(Rp_grid, C_grid, Rd_grid)
 # sigma_noise_max    = 6993.88
 # sigma_noise_min    = 4050.9
 
-s               = sio.loadmat('./data/test3/y_obs.mat')
-y_obs           = s['y_obs']
-epsilon         = s['epsilon']
-y_no_noise      = y_obs - epsilon
-sigma_noise_max = y_no_noise[1][0] * 0.01
-sigma_noise_min = y_no_noise[0][0] * 0.01
-y               = y_obs - epsilon + [[np.random.normal(0, sigma_noise_min)],[np.random.normal(0, sigma_noise_max)]]
+s                = sio.loadmat('./data/y_obs.mat')
+y_no_noise       = s['y_no_noise']
 
-sio.savemat('./data/y_obs.mat', {'y_obs':y, 'y':y_no_noise, 'sigma_noise_min':sigma_noise_min, 'sigma_noise_max':sigma_noise_max})
+# y_obs            = s['y_obs']
+# epsilon          = s['epsilon']
+# sigma_noise_max  = s['sigma_noise_max'][0][0]
+# sigma_noise_min  = s['sigma_noise_min'][0][0]
+# sigma_noise_mean = s['sigma_noise_mean'][0][0]
+
+sigma_noise_min  = y_no_noise[0][0] * 0.01
+sigma_noise_max  = y_no_noise[1][0] * 0.01
+sigma_noise_mean = y_no_noise[2][0] * 0.01
+
+epsilon = [[np.random.normal(0, sigma_noise_min)], [np.random.normal(0, sigma_noise_max)], [np.random.normal(0, sigma_noise_mean)]]
+y_obs = np.array([[y_no_noise[0][0] + epsilon[0][0]], [y_no_noise[1][0] + epsilon[1][0]], [y_no_noise[2][0] + epsilon[2][0]]])
 
 #%%
 # construct prior
 x_mean          = torch.tensor([[Rp_orig],[C_orig],[Rd_orig]]).float()
 
 def p_prior(x):
-    cov_matrix   = np.array([[(Rp_orig/8)**2, 0, 0], [0, (C_orig/8)**2, 0], [0, 0, (Rd_orig/8)**2]])
-    inv_cov      = np.linalg.inv(cov_matrix)
-    det_cov      = np.linalg.det(cov_matrix)
-    p_prior      = (2*np.pi)**(-3/2) * det_cov**(-1/2) * np.exp(-0.5*np.matmul(np.matmul(np.transpose(x-x_mean),inv_cov),x-x_mean))
+    # p_prior = 1
+    Rp, C, Rd = x[0][0], x[1][0], x[2][0]
+    if  (Rp < Rp_high and Rp > Rp_low) and \
+        (C < C_high and C > C_low) and \
+        (Rd < Rd_high and Rd > Rd_low):
+        p_prior = 1
+    else:
+        p_prior = 0
+    # cov_matrix   = np.array([[(Rp_orig/8)**2, 0, 0], [0, (C_orig/8)**2, 0], [0, 0, (Rd_orig/8)**2]])
+    # inv_cov      = np.linalg.inv(cov_matrix)
+    # det_cov      = np.linalg.det(cov_matrix)
+    # p_prior      = (2*np.pi)**(-3/2) * det_cov**(-1/2) * np.exp(-0.5*np.matmul(np.matmul(np.transpose(x-x_mean),inv_cov),x-x_mean))
     return p_prior
 
 def p_likelihood(y):
-    cov_matrix   = np.array([[(sigma_noise_min)**2, 0], [0, (sigma_noise_max)**2]])
-    inv_cov      = np.linalg.inv(cov_matrix)
-    det_cov      = np.linalg.det(cov_matrix)
-    p_likelihood = (2*np.pi)**(-3/2) * det_cov**(-1/2) * np.exp(-0.5*np.matmul(np.matmul(np.transpose(y-y_obs),inv_cov),y-y_obs))
+    cov_matrix           = np.array([[(sigma_noise_min)**2, 0, 0], [0, (sigma_noise_max)**2, 0], [0, 0, (sigma_noise_mean)**2]])
+    inv_cov, det_cov, k  = np.linalg.inv(cov_matrix), np.linalg.det(cov_matrix), np.shape(cov_matrix)[0]
+    p_likelihood         = (2*np.pi)**(-k/2) * det_cov**(-1/2) * np.exp(-0.5*np.matmul(np.matmul(np.transpose(y-y_obs),inv_cov),y-y_obs))
     return p_likelihood
 
 # construct posterior
@@ -113,7 +137,7 @@ for i in tqdm(np.arange(qoi_min.shape[0])):
     for j in np.arange(qoi_min.shape[1]):
         for k in np.arange(qoi_min.shape[2]):
             theta = torch.tensor([[Rp_mesh[i,j,k]], [C_mesh[i,j,k]], [Rd_mesh[i,j,k]]])
-            grid_posterior[i,j,k] = P_posterior(theta, torch.Tensor([[qoi_min[i,j,k]], [qoi_max[i,j,k]]]))
+            grid_posterior[i,j,k] = P_posterior(theta, torch.Tensor([[qoi_min[i,j,k]], [qoi_max[i,j,k]], [qoi_mean[i,j,k]]]))
             grid_prior[i,j,k] = p_prior(theta)
 
 posterior = grid_posterior / torch.sum(grid_posterior.flatten()*(Rp_grid[1]-Rp_grid[0])*(C_grid[1]-C_grid[0])*(Rd_grid[1]-Rd_grid[0]))
@@ -162,19 +186,23 @@ fig, ax = plt.subplots(1, 3, figsize=(12,3), gridspec_kw={'width_ratios': [1, 1,
 slice_idx = 0
 
 cbar_a = ax[0].contourf(Rp_grid, C_grid, marginal_CRp.T)
-ax[0].contour(Rp_grid, C_grid, prior_CRp.T, colors='y', linestyles='--')
+# ax[0].contour(Rp_grid, C_grid, prior_CRp.T, colors='y', linestyles='--')
 ax[0].set_xlabel('$R_p$')
 ax[0].set_ylabel('$C$')
 
 cbar_b = ax[1].contourf(Rp_grid, Rd_grid, marginal_RpRd.T)
-ax[1].contour(Rp_grid, Rd_grid, prior_RpRd.T, colors='y', linestyles='--')
+# ax[1].contour(Rp_grid, Rd_grid, prior_RpRd.T, colors='y', linestyles='--')
 ax[1].set_xlabel('$R_p$')
 ax[1].set_ylabel('$R_d$')
+# ax[1].set_ylim([25000, 28000])
+# ax[1].set_xlim([Rp_low, 1000])
 
 cbar_c = ax[2].contourf(Rd_grid, C_grid, marginal_CRd)
-ax[2].contour(Rd_grid, C_grid, prior_CRd, colors='y', linestyles='--')
+# ax[2].contour(Rd_grid, C_grid, prior_CRd, colors='y', linestyles='--')
 ax[2].set_xlabel('$R_d$')
 ax[2].set_ylabel('$C$')
+# ax[2].set_ylim([3.5e-5, 5e-5])
+# ax[2].set_xlim([25000, 30000])
 
 nbins = 6
 cbar = fig.colorbar(cbar_a)
@@ -207,18 +235,18 @@ fig, ax = plt.subplots(1, 3, figsize=(12,3), gridspec_kw={'width_ratios': [1, 1,
 slice_idx = 0
 
 cbar_a = ax[0].plot(Rp_grid, marginal_Rp)
-ax[0].plot(Rp_grid, prior_Rp, 'k--')
+# ax[0].plot(Rp_grid, prior_Rp, 'k--')
 ax[0].set_xlabel('$R_p$')
-ax[0].legend(['Posterior', 'Prior'])
+# ax[0].legend(['Posterior', 'Prior'])
 
 cbar_b = ax[1].plot(C_grid, marginal_C)
-ax[1].plot(C_grid, prior_C, 'k--')
-ax[1].legend(['Posterior', 'Prior'])
+# ax[1].plot(C_grid, prior_C, 'k--')
+# ax[1].legend(['Posterior', 'Prior'])
 ax[1].set_xlabel('$C$')
 
 cbar_c = ax[2].plot(Rd_grid, marginal_Rd)
-ax[2].plot(Rd_grid, prior_Rd, 'k--')
-ax[2].legend(['Posterior', 'Prior'])
+# ax[2].plot(Rd_grid, prior_Rd, 'k--')
+# ax[2].legend(['Posterior', 'Prior'])
 ax[2].set_xlabel('$R_d$')
 
 fig.tight_layout()
