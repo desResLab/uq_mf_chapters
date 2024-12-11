@@ -19,18 +19,18 @@ sigma_noise_mean= s['sigma_noise_mean'][0][0]
 y_obs           = s['y_obs']
 
 # [Rp, Rd, C] mean values
-Rp     = 6.8123e2
-Rd     = 3.1013e4
-C      = 3.6664e-5
-x_avg  = np.array([Rp, Rd, C])
-Rp_low, Rp_high = Rp - Rp*0.5, Rp + Rp*0.5
-Rd_low, Rd_high = Rd - Rd*0.5, Rd + Rd*0.5
-C_low, C_high   = C - C*0.5, C + C*0.5
+Rp                             = 6.8123e2
+Rd                             = 3.1013e4
+C                              = 3.6664e-5
+x_avg                          = np.array([Rp, Rd, C])
+Rp_low, Rp_high                = Rp - Rp*0.5, Rp + Rp*0.5
+Rd_low, Rd_high                = Rd - Rd*0.5, Rd + Rd*0.5
+C_low, C_high                  = C - C*0.5, C + C*0.5
+length_Rp, length_Rd, length_C = Rp_high - Rp_low, Rd_high - Rd_low, C_high - C_low
 x_init = np.array([np.random.uniform(Rp-0.5*Rp, Rp+0.5*Rp), np.random.uniform(Rd-0.5*Rd, Rd+0.5*Rd), np.random.uniform(C-0.5*C, C+0.5*C)])
 
 # uniform prior
 def p_prior(x):
-    print('x='+str(x))
     Rp, Rd, C = x[0], x[1], x[2]
     if  (Rp >= Rp_low and Rp <= Rp_high) and \
         (C >= C_low and C <= C_high) and \
@@ -51,6 +51,18 @@ def posterior_distribution(x, y):
     p_posterior = p_likelihood(y) * p_prior(x)
     return p_posterior
 
+def sample_candidate_point(xt,var):
+    # sample point and ensure it is within the bounds
+    xt_candidate = np.random.multivariate_normal(xt, var)
+    if xt_candidate[0] < Rp_low or xt_candidate[0] > Rp_high:
+        xt_candidate[0] = (xt_candidate[0] % length_Rp + length_Rp) % length_Rp
+    if xt_candidate[1] < Rd_low or xt_candidate[1] > Rd_high:
+        xt_candidate[1] = (xt_candidate[1] % length_Rd + length_Rd) % length_Rd
+    if xt_candidate[2] < C_low or xt_candidate[2] > C_high:
+        xt_candidate[2] = (xt_candidate[2] % length_C + length_C) % length_C
+    return xt_candidate
+
+
 def metropolis_hastings(file_path, target_density, dim, var, burnin_size):
 
     xt          = x_init #x_avg
@@ -64,14 +76,13 @@ def metropolis_hastings(file_path, target_density, dim, var, burnin_size):
     
     for i in range(1, total_size):
 
-        xt_candidate = np.random.multivariate_normal(xt, var)
+        xt_candidate = sample_candidate_point(xt, var)
         
         os.system("python " + file_path + "create_input.py " + str(i) + ' ' + str(xt_candidate[0]) + ' ' + str(xt_candidate[1]) + ' ' + str(xt_candidate[2]))
         os.system(solver + ' ' + file_path + 'sims/sim_' + str(i) + '/aobif_' + str(i) + '.json ' + file_path + 'sims/sim_' + str(i) + '/aobif_' + str(i) + '.csv')
         yt_candidate = get_QOI_0D(file_path + 'sims/sim_' + str(i) + '/aobif_' + str(i) +'.csv')
         
         mh_ratio = (target_density(xt_candidate, yt_candidate))/(target_density(xt, yt))
-        print(mh_ratio)
         accept_prob = min(1, mh_ratio)
         if np.random.uniform(0, 1) < accept_prob:
             xt_new = xt_candidate
