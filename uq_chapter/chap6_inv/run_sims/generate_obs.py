@@ -8,8 +8,6 @@ import torch
 
 dirpath = '/Users/chloe/Documents/Stanford/ME398_Spring/marsden_uq/uq_mf_chapters/uq_chapter/chap6_inv/'
 
-sigma_noise = 8000
-
 Rp_bounds = 0.3
 C_bounds  = 0.3
 Rd_bounds = 0.3
@@ -24,7 +22,7 @@ C  = np.random.uniform(C-C_bounds*C,    C+C_bounds*C)
 Rd = np.random.uniform(Rd-Rd_bounds*Rd, Rd+Rd_bounds*Rd)
 
 # save the RCR values
-sio.savemat(dirpath+'data/x_obs.mat', {'Rp':Rp, 'C':C, 'Rd':Rd})
+# sio.savemat(dirpath+'data/x_obs.mat', {'Rp':Rp, 'C':C, 'Rd':Rd})
 
 #%% Generate svZeroDSolver input file
 import pandas as pd
@@ -182,7 +180,7 @@ csv_file  = dirpath+'data/aobif_obs.csv'
 # run the simulation
 os.system('/Users/chloe/Documents/Stanford/ME398_Winter/Release/svzerodsolver '+json_file+' '+csv_file)
 
-#%% After running svZeroDSolver
+#%% Obtain output (withouse noise) after running svZeroDSolver
 
 filename = dirpath+'data/aobif_obs.csv'
 
@@ -218,14 +216,33 @@ def get_QOI_0D(filename, QOI_name=None):
 
 y_no_noise = get_QOI_0D(filename)
 
+#%% Add noise to the output
+
+num_of_obs = 50
+
 scaling_factor   = [0.01, 0.01, 0.01]
 
 sigma_noise_min  = y_no_noise[0][0]*scaling_factor[0]
 sigma_noise_max  = y_no_noise[1][0]*scaling_factor[1]
 sigma_noise_mean = y_no_noise[2][0]*scaling_factor[2]
 
-epsilon = [[np.random.normal(0, sigma_noise_min)], [np.random.normal(0, sigma_noise_max)], [np.random.normal(0, sigma_noise_mean)]]
+for i in range(num_of_obs):
 
-y_obs = [[y_no_noise[0][0] + epsilon[0][0]], [y_no_noise[1][0] + epsilon[1][0]], [y_no_noise[2][0] + epsilon[2][0]]]
+    epsilon = [[np.random.normal(0, sigma_noise_min)], [np.random.normal(0, sigma_noise_max)], [np.random.normal(0, sigma_noise_mean)]]
 
-sio.savemat('../data/y_obs.mat', {'y_obs':y_obs, 'epsilon':epsilon, 'y_no_noise':y_no_noise, 'sigma_noise_min':sigma_noise_min, 'sigma_noise_max':sigma_noise_max, 'sigma_noise_mean':sigma_noise_mean})
+    if i == 0:
+        y_min  = y_no_noise[0] + epsilon[0]
+        y_max  = y_no_noise[1] + epsilon[1]
+        y_mean = y_no_noise[2] + epsilon[2]
+    else:
+        y_min  = np.append(y_min, y_no_noise[0][0] + epsilon[0][0])
+        y_max  = np.append(y_max,  y_no_noise[1][0] + epsilon[1][0])
+        y_mean = np.append(y_mean, y_no_noise[2][0] + epsilon[2][0])
+
+y_obs = [y_min, y_max, y_mean]
+
+if num_of_obs > 1:
+    sio.savemat('../data/y_obs_mult.mat', {'y_obs':y_obs, 'epsilon':epsilon, 'y_no_noise':y_no_noise, 'sigma_noise_min':sigma_noise_min, 'sigma_noise_max':sigma_noise_max, 'sigma_noise_mean':sigma_noise_mean})
+# else:
+#     sio.savemat('../data/y_obs.mat', {'y_obs':y_obs, 'epsilon':epsilon, 'y_no_noise':y_no_noise, 'sigma_noise_min':sigma_noise_min, 'sigma_noise_max':sigma_noise_max, 'sigma_noise_mean':sigma_noise_mean})
+# %%
