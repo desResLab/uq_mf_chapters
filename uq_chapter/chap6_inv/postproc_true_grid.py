@@ -24,9 +24,9 @@ r_aorta = 1.019478928
 
 # quantity of interest
 vessel = 'aorta'
-prober = 'min'
 what   = 'pressure'
-name   = what+':'+vessel+':'+prober
+# prober = 'min'
+# name   = what+':'+vessel+':'+prober
 
 # currently we are choosing the interpolated data
 # zerod_filename  = '/Users/chloe/Desktop/grid_0D/QoI_0D_grid.csv'
@@ -40,7 +40,7 @@ zerod_var_names = np.genfromtxt(zerod_filename, dtype='U', usecols=0, skip_heade
 zerod_data      = np.genfromtxt(zerod_filename, usecols=range(1,n_points**3+1), skip_header=1, delimiter=',')
 
 # pull out the QOI of interest
-idxs = np.nonzero(zerod_var_names == name)[0]
+idxs = np.nonzero(zerod_var_names == what+':'+vessel+':min')[0]
 qoi_min  = zerod_data[idxs,:]
 qoi_min  = qoi_min.reshape(n_points, n_points, n_points)
 
@@ -95,23 +95,23 @@ y_no_noise       = s['y_no_noise']
 # sigma_noise_min  = s['sigma_noise_min'][0][0]
 # sigma_noise_mean = s['sigma_noise_mean'][0][0]
 
-sigma_noise_min  = y_no_noise[0][0] * 0.01
-sigma_noise_max  = y_no_noise[1][0] * 0.01
-sigma_noise_mean = y_no_noise[2][0] * 0.01
+sigma_noise_min  = y_no_noise[0][0] * 0.05
+sigma_noise_max  = y_no_noise[1][0] * 0.1
+sigma_noise_mean = y_no_noise[2][0] * 0.1
 
 epsilon = [[np.random.normal(0, sigma_noise_min)], [np.random.normal(0, sigma_noise_max)], [np.random.normal(0, sigma_noise_mean)]]
 y_obs = np.array([[y_no_noise[0][0] + epsilon[0][0]], [y_no_noise[1][0] + epsilon[1][0]], [y_no_noise[2][0] + epsilon[2][0]]])
 
 #%%
 # construct prior
-x_mean          = torch.tensor([[Rp_orig],[C_orig],[Rd_orig]]).float()
+x_mean          = np.array([[Rp_orig],[C_orig],[Rd_orig]])
 
 def p_prior(x):
     # p_prior = 1
     Rp, C, Rd = x[0][0], x[1][0], x[2][0]
-    if  (Rp < Rp_high and Rp > Rp_low) and \
-        (C < C_high and C > C_low) and \
-        (Rd < Rd_high and Rd > Rd_low):
+    if  (Rp > Rp_low and Rp < Rp_high) and \
+        (C > C_low and C < C_high) and \
+        (Rd > Rd_low and Rd < Rd_high):
         p_prior = 1
     else:
         p_prior = 0
@@ -130,18 +130,18 @@ def p_likelihood(y):
 # construct posterior
 P_posterior    = lambda x,y: p_likelihood(y)*p_prior(x)
 
-grid_posterior = torch.zeros((qoi_min.shape[0], qoi_min.shape[1], qoi_min.shape[2]))
-grid_prior     = torch.zeros((qoi_min.shape[0], qoi_min.shape[1], qoi_min.shape[2]))
+grid_posterior = np.zeros((qoi_min.shape[0], qoi_min.shape[1], qoi_min.shape[2]))
+grid_prior     = np.zeros((qoi_min.shape[0], qoi_min.shape[1], qoi_min.shape[2]))
 
 for i in tqdm(np.arange(qoi_min.shape[0])):
     for j in np.arange(qoi_min.shape[1]):
         for k in np.arange(qoi_min.shape[2]):
-            theta = torch.tensor([[Rp_mesh[i,j,k]], [C_mesh[i,j,k]], [Rd_mesh[i,j,k]]])
-            grid_posterior[i,j,k] = P_posterior(theta, torch.Tensor([[qoi_min[i,j,k]], [qoi_max[i,j,k]], [qoi_mean[i,j,k]]]))
+            theta = np.array([[Rp_mesh[i,j,k]], [C_mesh[i,j,k]], [Rd_mesh[i,j,k]]])
+            grid_posterior[i,j,k] = P_posterior(theta, np.array([[qoi_min[i,j,k]], [qoi_max[i,j,k]], [qoi_mean[i,j,k]]]))
             grid_prior[i,j,k] = p_prior(theta)
 
-posterior = grid_posterior / torch.sum(grid_posterior.flatten()*(Rp_grid[1]-Rp_grid[0])*(C_grid[1]-C_grid[0])*(Rd_grid[1]-Rd_grid[0]))
-prior     = grid_prior / torch.sum(grid_prior.flatten()*(Rp_grid[1]-Rp_grid[0])*(C_grid[1]-C_grid[0])*(Rd_grid[1]-Rd_grid[0]))
+posterior = grid_posterior / np.sum(grid_posterior.flatten()*(Rp_grid[1]-Rp_grid[0])*(C_grid[1]-C_grid[0])*(Rd_grid[1]-Rd_grid[0]))
+prior     = grid_prior / np.sum(grid_prior.flatten()*(Rp_grid[1]-Rp_grid[0])*(C_grid[1]-C_grid[0])*(Rd_grid[1]-Rd_grid[0]))
 
 posterior = np.reshape(posterior, (n_points, n_points, n_points))
 prior     = np.reshape(prior, (n_points, n_points, n_points))
@@ -150,26 +150,26 @@ prior     = np.reshape(prior, (n_points, n_points, n_points))
 # dim = 1 is Rp, dim = 0 is C, dim = 2 is Rd
 
 # marginal distributions along 2 dims
-marginal_CRd  = torch.sum(posterior, dim=1)*(Rp_grid[1]-Rp_grid[0])
-marginal_RpRd = torch.sum(posterior, dim=0)*(C_grid[1]-C_grid[0])
-marginal_CRp  = torch.sum(posterior, dim=2)*(Rd_grid[1]-Rd_grid[0])
+marginal_CRd  = np.sum(posterior, axis=1)*(Rp_grid[1]-Rp_grid[0])
+marginal_RpRd = np.sum(posterior, axis=0)*(C_grid[1]-C_grid[0])
+marginal_CRp  = np.sum(posterior, axis=2)*(Rd_grid[1]-Rd_grid[0])
 
 # marginal distribution along 1 dim
-marginal_Rp   = torch.sum(posterior, dim=(0,2))*(Rd_grid[1]-Rd_grid[0])*(C_grid[1]-C_grid[0])
-marginal_Rd   = torch.sum(posterior, dim=(1,0))*(Rp_grid[1]-Rp_grid[0])*(C_grid[1]-C_grid[0])
-marginal_C    = torch.sum(posterior, dim=(1,2))*(Rp_grid[1]-Rp_grid[0])*(Rd_grid[1]-Rd_grid[0])
+marginal_Rp   = np.sum(posterior, axis=(0,2))*(Rd_grid[1]-Rd_grid[0])*(C_grid[1]-C_grid[0])
+marginal_Rd   = np.sum(posterior, axis=(1,0))*(Rp_grid[1]-Rp_grid[0])*(C_grid[1]-C_grid[0])
+marginal_C    = np.sum(posterior, axis=(1,2))*(Rp_grid[1]-Rp_grid[0])*(Rd_grid[1]-Rd_grid[0])
 
 #%% Compute the prior distributions
 
 # prior distribution along 2 dims
-prior_CRd     = torch.sum(prior, dim=1)*(Rp_grid[1]-Rp_grid[0])
-prior_RpRd    = torch.sum(prior, dim=0)*(C_grid[1]-C_grid[0])
-prior_CRp     = torch.sum(prior, dim=2)*(Rd_grid[1]-Rd_grid[0])
+prior_CRd     = np.sum(prior, axis=1)*(Rp_grid[1]-Rp_grid[0])
+prior_RpRd    = np.sum(prior, axis=0)*(C_grid[1]-C_grid[0])
+prior_CRp     = np.sum(prior, axis=2)*(Rd_grid[1]-Rd_grid[0])
 
 # prior distribution along 1 dim
-prior_Rp      = torch.sum(prior, dim=(0,2))*(Rd_grid[1]-Rd_grid[0])*(C_grid[1]-C_grid[0])
-prior_Rd      = torch.sum(prior, dim=(1,0))*(Rp_grid[1]-Rp_grid[0])*(C_grid[1]-C_grid[0])
-prior_C       = torch.sum(prior, dim=(1,2))*(Rp_grid[1]-Rp_grid[0])*(Rd_grid[1]-Rd_grid[0])
+prior_Rp      = np.sum(prior, axis=(0,2))*(Rd_grid[1]-Rd_grid[0])*(C_grid[1]-C_grid[0])
+prior_Rd      = np.sum(prior, axis=(1,0))*(Rp_grid[1]-Rp_grid[0])*(C_grid[1]-C_grid[0])
+prior_C       = np.sum(prior, axis=(1,2))*(Rp_grid[1]-Rp_grid[0])*(Rd_grid[1]-Rd_grid[0])
 
 #%% Plot the posterior distributions for the marginal distributions along 2 dims
 
@@ -255,23 +255,23 @@ fig.tight_layout()
 
 # zerod_filepath  = '/Users/chloe/Desktop/grid_0D/'
 
-zerod_filepath  = './grid_0D/'
+# zerod_filepath  = './grid_0D/'
 
-sio.savemat(zerod_filepath+'marginal_CRp.mat', 
-            {'Rp_grid': Rp_grid,
-             'C_grid': C_grid, 
-             'Rd_grid': Rd_grid,
-             'marginal_CRp': marginal_CRp.T.detach().numpy(),
-             'marginal_RpRd': marginal_RpRd.T.detach().numpy(),
-             'marginal_CRd': marginal_CRd.detach().numpy(),
-             'marginal_Rp': marginal_Rp.detach().numpy(),
-             'marginal_C': marginal_C.detach().numpy(),
-             'marginal_Rd': marginal_Rd.detach().numpy(),
-             'prior_CRp': prior_CRp.T.detach().numpy(),
-             'prior_RpRd': prior_RpRd.T.detach().numpy(),
-             'prior_CRd': prior_CRd.detach().numpy(),
-             'prior_Rp': prior_Rp.detach().numpy(),
-             'prior_C': prior_C.detach().numpy(),
-             'prior_Rd': prior_Rd.detach().numpy()})
+# sio.savemat(zerod_filepath+'marginal_CRp.mat', 
+#             {'Rp_grid': Rp_grid,
+#              'C_grid': C_grid, 
+#              'Rd_grid': Rd_grid,
+#              'marginal_CRp': marginal_CRp.T.detach().numpy(),
+#              'marginal_RpRd': marginal_RpRd.T.detach().numpy(),
+#              'marginal_CRd': marginal_CRd.detach().numpy(),
+#              'marginal_Rp': marginal_Rp.detach().numpy(),
+#              'marginal_C': marginal_C.detach().numpy(),
+#              'marginal_Rd': marginal_Rd.detach().numpy(),
+#              'prior_CRp': prior_CRp.T.detach().numpy(),
+#              'prior_RpRd': prior_RpRd.T.detach().numpy(),
+#              'prior_CRd': prior_CRd.detach().numpy(),
+#              'prior_Rp': prior_Rp.detach().numpy(),
+#              'prior_C': prior_C.detach().numpy(),
+#              'prior_Rd': prior_Rd.detach().numpy()})
 
 # %%

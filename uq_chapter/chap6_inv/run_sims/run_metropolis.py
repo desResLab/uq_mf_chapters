@@ -14,6 +14,7 @@ dim = 3
 s               = sio.loadmat('./data/y_obs.mat')
 sigma_noise_max = s['sigma_noise_max']
 sigma_noise_min = s['sigma_noise_min']
+sigma_noise_mean= s['sigma_noise_mean']
 y_obs           = s['y_obs']
 
 # [Rp, Rd, C] mean values
@@ -21,17 +22,24 @@ Rp     = 6.8123e2
 Rd     = 3.1013e4
 C      = 3.6664e-5
 x_avg  = np.array([Rp, Rd, C])
+Rp_low, Rp_high = Rp - Rp*0.5, Rp + Rp*0.5
+Rd_low, Rd_high = Rd - Rd*0.5, Rd + Rd*0.5
+C_low, C_high   = C - C*0.5, C + C*0.5
 x_init = np.array([np.random.uniform(Rp-0.5*Rp, Rp+0.5*Rp), np.random.uniform(Rd-0.5*Rd, Rd+0.5*Rd), np.random.uniform(C-0.5*C, C+0.5*C)])
 
+# uniform prior
 def p_prior(x):
-    cov_matrix   = np.array([[(x_avg[0]/8)**2, 0, 0], [0, (x_avg[1]/8)**2, 0], [0, 0, (x_avg[2]/8)**2]])
-    inv_cov      = np.linalg.inv(cov_matrix)
-    det_cov      = np.linalg.det(cov_matrix)
-    p_prior      = (2*np.pi)**(-3/2) * det_cov**(-1/2) * np.exp(-0.5*np.matmul(np.matmul(np.transpose(x-x_avg),inv_cov),x-x_avg))
+    Rp, Rd, C = x[0][0], x[1][0], x[2][0]
+    if  (Rp >= Rp_low and Rp <= Rp_high) and \
+        (C >= C_low and C <= C_high) and \
+        (Rd >= Rd_low and Rd <= Rd_high):
+        p_prior = 1/(Rp_high-Rp_low)/(C_high-C_low)/(Rd_high-Rd_low)
+    else:
+        p_prior = 0
     return p_prior
 
 def p_likelihood(y):
-    cov_matrix   = np.array([[(sigma_noise_min)**2, 0], [0, (sigma_noise_max)**2]])
+    cov_matrix   = np.array([[(sigma_noise_min)**2, 0, 0], [0, (sigma_noise_max)**2, 0], [0, 0, (sigma_noise_mean)**2]])
     inv_cov      = np.linalg.inv(cov_matrix)
     det_cov      = np.linalg.det(cov_matrix)
     p_likelihood = (2*np.pi)**(-3/2) * det_cov**(-1/2) * np.exp(-0.5*np.matmul(np.matmul(np.transpose(y-y_obs),inv_cov),y-y_obs))
@@ -75,7 +83,6 @@ def metropolis_hastings(file_path, target_density, dim, var, burnin_size):
         yt = yt_new
 
         sio.savemat(file_path+'mh_sim.mat', {'samples':samples, 'n_accepted':n_accepted})
-
 
 var = np.array([[(x_avg[0]/10)**2, 0, 0], [0, (x_avg[1]/10)**2, 0], [0, 0, (x_avg[2]/10)**2]])
 metropolis_hastings(file_path, posterior_distribution, dim, var, burnin_size)

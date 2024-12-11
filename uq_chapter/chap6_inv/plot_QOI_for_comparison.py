@@ -4,7 +4,7 @@ import pandas as pd
 
 # which QOI to plot
 vessel    = 'aorta' # 'aorta' or 'left_iliac' or 'right_iliac'
-prober    = 'min'   # 'max' or 'min' or 'avg'
+prober    = 'max'   # 'max' or 'min' or 'avg'
 what      = 'pressure'  # 'flow' or 'pressure'
 
 # number of points in N x N x N grid
@@ -115,3 +115,5 @@ for slice_idx in range(0, N):
 fig.set_figwidth(50)
 fig.set_figheight(20)
 fig.suptitle(name+' from $R_p=$'+str(Rp_orig)+', $C$='+str(C_orig)+', $R_d$='+str(Rd_orig), fontsize=20)
+
+# %%
