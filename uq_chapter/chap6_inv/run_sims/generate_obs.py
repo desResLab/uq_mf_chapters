@@ -228,4 +228,4 @@ epsilon = [[np.random.normal(0, sigma_noise_min)], [np.random.normal(0, sigma_no
 
 y_obs = [[y_no_noise[0][0] + epsilon[0][0]], [y_no_noise[1][0] + epsilon[1][0]], [y_no_noise[2][0] + epsilon[2][0]]]
 
-sio.savemat('../data/y_obs.mat', {'y_obs':y_obs, 'epsilon':epsilon, 'y_no_noise':y_no_noise})
+sio.savemat('../data/y_obs.mat', {'y_obs':y_obs, 'epsilon':epsilon, 'y_no_noise':y_no_noise, 'sigma_noise_min':sigma_noise_min, 'sigma_noise_max':sigma_noise_max, 'sigma_noise_mean':sigma_noise_mean})
