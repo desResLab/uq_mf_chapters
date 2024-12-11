@@ -22,7 +22,8 @@ def get_QOI_0D(filename, QOI_name=None):
         # pressure at the aortic inlet
         zerod_data[name+':pressure_in'] = (data[idxs,2])[-steps_per_cycle:]
 
-    pressure_max = max(zerod_data['aorta:pressure_in'])
-    pressure_min = min(zerod_data['aorta:pressure_in'])
+    pressure_max  = max(zerod_data['aorta:pressure_in'])
+    pressure_min  = min(zerod_data['aorta:pressure_in'])
+    pressure_mean = np.mean(zerod_data['aorta:pressure_in'])
 
-    return pressure_max, pressure_min
+    return [[pressure_max], [pressure_min], [pressure_mean]]

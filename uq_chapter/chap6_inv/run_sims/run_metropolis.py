@@ -4,17 +4,18 @@ import scipy.io as sio
 from get_QOI_0D import get_QOI_0D
 import sys
 
-file_path   = '/scratch/users/chloe1/chain_6/'
+file_path   = '/scratch/users/chloe1/chain_1/'
 solver      = '/home/users/chloe1/svZeroDSolver/Release/svzerodsolver'
+#solver      = '/oak/stanford/groups/amarsden/chloe1/svZeroDSolver/Release/svzerodsolver'
 total_size  = int(sys.argv[1])
 burnin_size = int(sys.argv[2])
 dim = 3
 
 # Load observation with noise (min pressure, max pressure)
 s               = sio.loadmat('./data/y_obs.mat')
-sigma_noise_max = s['sigma_noise_max']
-sigma_noise_min = s['sigma_noise_min']
-sigma_noise_mean= s['sigma_noise_mean']
+sigma_noise_max = s['sigma_noise_max'][0][0]
+sigma_noise_min = s['sigma_noise_min'][0][0]
+sigma_noise_mean= s['sigma_noise_mean'][0][0]
 y_obs           = s['y_obs']
 
 # [Rp, Rd, C] mean values
@@ -29,7 +30,8 @@ x_init = np.array([np.random.uniform(Rp-0.5*Rp, Rp+0.5*Rp), np.random.uniform(Rd
 
 # uniform prior
 def p_prior(x):
-    Rp, Rd, C = x[0][0], x[1][0], x[2][0]
+    print('x='+str(x))
+    Rp, Rd, C = x[0], x[1], x[2]
     if  (Rp >= Rp_low and Rp <= Rp_high) and \
         (C >= C_low and C <= C_high) and \
         (Rd >= Rd_low and Rd <= Rd_high):
@@ -69,6 +71,7 @@ def metropolis_hastings(file_path, target_density, dim, var, burnin_size):
         yt_candidate = get_QOI_0D(file_path + 'sims/sim_' + str(i) + '/aobif_' + str(i) +'.csv')
         
         mh_ratio = (target_density(xt_candidate, yt_candidate))/(target_density(xt, yt))
+        print(mh_ratio)
         accept_prob = min(1, mh_ratio)
         if np.random.uniform(0, 1) < accept_prob:
             xt_new = xt_candidate
