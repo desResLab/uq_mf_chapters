@@ -62,11 +62,11 @@ def sample_candidate_point(xt,var):
     # sample point and ensure it is within the bounds
     xt_candidate = np.random.multivariate_normal(xt, var)
     if xt_candidate[0] < Rp_low or xt_candidate[0] > Rp_high:
-        xt_candidate[0] = (xt_candidate[0] % length_Rp + length_Rp) % length_Rp
+        xt_candidate[0] = Rp_low + (xt_candidate[0] - Rp_low) % length_Rp
     if xt_candidate[1] < Rd_low or xt_candidate[1] > Rd_high:
-        xt_candidate[1] = (xt_candidate[1] % length_Rd + length_Rd) % length_Rd
+        xt_candidate[1] = Rd_low + (xt_candidate[1] - Rd_low) % length_Rd
     if xt_candidate[2] < C_low or xt_candidate[2] > C_high:
-        xt_candidate[2] = (xt_candidate[2] % length_C + length_C) % length_C
+        xt_candidate[2] = C_low + (xt_candidate[2] - C_low) % length_C
     return xt_candidate
 
 def metropolis_hastings(file_path, target_density, dim, var, burnin_size):
