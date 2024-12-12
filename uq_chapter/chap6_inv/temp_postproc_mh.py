@@ -13,7 +13,7 @@ from tqdm import tqdm
 
 #%% Plot Figure 9 in the UQ chapter
 
-num_obs = 'one_obs'
+num_obs = 'mult_obs'
 
 burnin_size = 2000
 dim         = 3

@@ -1,8 +1,11 @@
+#%%
 import numpy as np
 import os
 import scipy.io as sio
 from get_QOI_0D import get_QOI_0D
 import sys
+
+#%%
 
 # Next steps:
 # (0) Run finer grid? (yes for 2D)
@@ -10,7 +13,7 @@ import sys
     # send to Daniele and get his feedback
 # (2) Make the 2D version: now we have a ratio (Rp/Rd), and so we have Rd and C only (one 2D, two 1D plots)
 
-file_path   = '/scratch/users/chloe1/chain_1/'
+file_path   = '/scratch/users/chloe1/new_mult_obs/chain_1/'
 solver      = '/home/users/chloe1/svZeroDSolver/Release/svzerodsolver'
 #solver      = '/oak/stanford/groups/amarsden/chloe1/svZeroDSolver/Release/svzerodsolver'
 total_size  = int(sys.argv[1])
@@ -91,11 +94,15 @@ def metropolis_hastings(file_path, target_density, dim, var, burnin_size):
         xt_candidate = np.random.multivariate_normal(xt, var)
         # xt_candidate = sample_candidate_point(xt, var)
         
-        os.system("python " + file_path + "create_input.py " + str(i) + ' ' + str(xt_candidate[0]) + ' ' + str(xt_candidate[1]) + ' ' + str(xt_candidate[2]))
-        os.system(solver + ' ' + file_path + 'sims/sim_' + str(i) + '/aobif_' + str(i) + '.json ' + file_path + 'sims/sim_' + str(i) + '/aobif_' + str(i) + '.csv')
-        yt_candidate = get_QOI_0D(file_path + 'sims/sim_' + str(i) + '/aobif_' + str(i) +'.csv')
-        
-        mh_ratio = (target_density(xt_candidate, yt_candidate))/(target_density(xt, yt))
+        if p_prior(xt_candidate) == 0:
+            # do not run 0D solver if the xt_candidate is outside the bounds
+            mh_ratio = 0
+        else:
+            os.system("python " + file_path + "create_input.py " + str(i) + ' ' + str(xt_candidate[0]) + ' ' + str(xt_candidate[1]) + ' ' + str(xt_candidate[2]))
+            os.system(solver + ' ' + file_path + 'sims/sim_' + str(i) + '/aobif_' + str(i) + '.json ' + file_path + 'sims/sim_' + str(i) + '/aobif_' + str(i) + '.csv')
+            yt_candidate = get_QOI_0D(file_path + 'sims/sim_' + str(i) + '/aobif_' + str(i) +'.csv')
+            mh_ratio = (target_density(xt_candidate, yt_candidate))/(target_density(xt, yt))
+
         accept_prob = min(1, mh_ratio)
         if np.random.uniform(0, 1) < accept_prob:
             xt_new = xt_candidate
