@@ -4,6 +4,12 @@ import scipy.io as sio
 from get_QOI_0D import get_QOI_0D
 import sys
 
+# Next steps:
+# (0) Run finer grid? (yes for 2D)
+# (1) Run MH on Sherlock, now that we fixed numerical issues
+    # send to Daniele and get his feedback
+# (2) Make the 2D version: now we have a ratio (Rp/Rd), and so we have Rd and C only (one 2D, two 1D plots)
+
 file_path   = '/scratch/users/chloe1/chain_1/'
 solver      = '/home/users/chloe1/svZeroDSolver/Release/svzerodsolver'
 #solver      = '/oak/stanford/groups/amarsden/chloe1/svZeroDSolver/Release/svzerodsolver'
@@ -35,7 +41,7 @@ def p_prior(x):
     if  (Rp >= Rp_low and Rp <= Rp_high) and \
         (C >= C_low and C <= C_high) and \
         (Rd >= Rd_low and Rd <= Rd_high):
-        p_prior = 1/(Rp_high-Rp_low)/(C_high-C_low)/(Rd_high-Rd_low)
+        p_prior = 1 #/(Rp_high-Rp_low)/(C_high-C_low)/(Rd_high-Rd_low)
     else:
         p_prior = 0
     return p_prior
@@ -48,30 +54,30 @@ def p_likelihood(y):
         for i in np.arange(np.shape(y_obs)[1]):
             # add the log likelihoods for the observations
             y_obs_idx          = np.array([[y_obs[0][0]], [y_obs[1][0]], [y_obs[2][0]]])
-            p_log_likelihood  += np.log((2*np.pi)**(-k/2) * det_cov**(-1/2) * np.exp(-0.5*np.matmul(np.matmul(np.transpose(y-y_obs_idx),inv_cov),y-y_obs_idx)))
+            p_log_likelihood  += -0.5*np.matmul(np.matmul(np.transpose(y-y_obs_idx),inv_cov),y-y_obs_idx)
         p_likelihood = np.exp(p_log_likelihood)
     else:
-        p_likelihood = (2*np.pi)**(-k/2) * det_cov**(-1/2) * np.exp(-0.5*np.matmul(np.matmul(np.transpose(y-y_obs),inv_cov),y-y_obs))
+        p_likelihood = np.exp(-0.5*np.matmul(np.matmul(np.transpose(y-y_obs),inv_cov),y-y_obs))
     return p_likelihood
 
 def posterior_distribution(x, y):
     p_posterior = p_likelihood(y) * p_prior(x)
     return p_posterior
 
-def sample_candidate_point(xt,var):
-    # sample point and ensure it is within the bounds
-    xt_candidate = np.random.multivariate_normal(xt, var)
-    if xt_candidate[0] < Rp_low or xt_candidate[0] > Rp_high:
-        xt_candidate[0] = Rp_low + (xt_candidate[0] - Rp_low) % length_Rp
-    if xt_candidate[1] < Rd_low or xt_candidate[1] > Rd_high:
-        xt_candidate[1] = Rd_low + (xt_candidate[1] - Rd_low) % length_Rd
-    if xt_candidate[2] < C_low or xt_candidate[2] > C_high:
-        xt_candidate[2] = C_low + (xt_candidate[2] - C_low) % length_C
-    return xt_candidate
+# def sample_candidate_point(xt,var):
+#     # sample point and ensure it is within the bounds
+#     xt_candidate = np.random.multivariate_normal(xt, var)
+#     if xt_candidate[0] < Rp_low or xt_candidate[0] > Rp_high:
+#         xt_candidate[0] = Rp_low + (xt_candidate[0] - Rp_low) % length_Rp
+#     if xt_candidate[1] < Rd_low or xt_candidate[1] > Rd_high:
+#         xt_candidate[1] = Rd_low + (xt_candidate[1] - Rd_low) % length_Rd
+#     if xt_candidate[2] < C_low or xt_candidate[2] > C_high:
+#         xt_candidate[2] = C_low + (xt_candidate[2] - C_low) % length_C
+#     return xt_candidate
 
 def metropolis_hastings(file_path, target_density, dim, var, burnin_size):
 
-    xt          = x_init #x_avg
+    xt = x_init # x_avg
     os.system("python " + file_path + "create_input.py 0 " + str(xt[0]) + ' ' + str(xt[1]) + ' ' + str(xt[2]))
     os.system(solver + ' ' + file_path + 'sims/sim_0/aobif_0.json ' + file_path + 'sims/sim_0/aobif_0.csv')
     
@@ -82,7 +88,8 @@ def metropolis_hastings(file_path, target_density, dim, var, burnin_size):
     
     for i in range(1, total_size):
 
-        xt_candidate = sample_candidate_point(xt, var)
+        xt_candidate = np.random.multivariate_normal(xt, var)
+        # xt_candidate = sample_candidate_point(xt, var)
         
         os.system("python " + file_path + "create_input.py " + str(i) + ' ' + str(xt_candidate[0]) + ' ' + str(xt_candidate[1]) + ' ' + str(xt_candidate[2]))
         os.system(solver + ' ' + file_path + 'sims/sim_' + str(i) + '/aobif_' + str(i) + '.json ' + file_path + 'sims/sim_' + str(i) + '/aobif_' + str(i) + '.csv')

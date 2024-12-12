@@ -13,6 +13,8 @@ from tqdm import tqdm
 
 #%% Plot Figure 9 in the UQ chapter
 
+num_obs = 'one_obs'
+
 burnin_size = 2000
 dim         = 3
 # file_path   = '/Users/chloe/Desktop/'
@@ -31,7 +33,7 @@ for i in range(1,6+1): #range(6,6+1) for the paper
 
     # filename   = sio.loadmat(file_path+'chains_var_div10/chain_'+str(i)+'.mat')
     # filename = sio.loadmat(file_path+'one_obs/chain_'+str(i)+'/mh_sim.mat')
-    filename = sio.loadmat(file_path+'mult_obs/chain_'+str(i)+'/mh_sim.mat')
+    filename = sio.loadmat(file_path+num_obs+'/chain_'+str(i)+'/mh_sim.mat')
     n_accepted = filename['n_accepted']
     samples    = filename['samples']
     samples    = np.squeeze(samples)
@@ -128,8 +130,8 @@ for i in range(1,6+1): #range(6,6+1) for the paper
 
     fig.get_layout_engine().set(hspace=0.2)
 
-    if i == 6:
-        plt.savefig('./figs/hexbin_and_hist.png', dpi=300)
+    # if i == 6:
+    #     plt.savefig('./figs/hexbin_and_hist.png', dpi=300)
 
 #%% Compute the MAP using various methods
 
@@ -173,7 +175,7 @@ for i in range(1,J+1):
 
     # filename   = sio.loadmat(file_path+'chains_var_div10/chain_'+str(i)+'.mat')
     #filename = sio.loadmat(file_path+'one_obs/chain_'+str(i)+'/mh_sim.mat')
-    filename = sio.loadmat(file_path+'mult_obs/chain_'+str(i)+'/mh_sim.mat')
+    filename = sio.loadmat(file_path+num_obs+'/chain_'+str(i)+'/mh_sim.mat')
     n_accepted = filename['n_accepted']
     samples    = filename['samples']
     samples    = np.squeeze(samples)
@@ -211,7 +213,7 @@ for k in tqdm(range(1,L+1)):
     
     for i in range(1,J+1):
     
-        filename   = sio.loadmat(file_path+'chain_'+str(i)+'.mat')
+        filename   = sio.loadmat(file_path+num_obs+'/chain_'+str(i)+'/mh_sim.mat')
         n_accepted = filename['n_accepted']
         samples    = filename['samples']
         samples    = np.squeeze(samples)
@@ -245,25 +247,25 @@ plt.plot(samples[:,0])
 plt.xlabel('Iteration MH')
 plt.ylabel('$R_p$')
 plt.ylim(Rp_grid[0], Rp_grid[-1])
-plt.savefig('./figs/trace_Rp.png', dpi=300)
+# plt.savefig('./figs/trace_Rp.png', dpi=300)
 
 plt.figure(figsize=(5,4.5))
 plt.plot(samples[:,1])
 plt.xlabel('Iteration MH')
 plt.ylabel('$R_d$')
 plt.ylim(Rd_grid[0], Rd_grid[-1])
-plt.savefig('./figs/trace_Rd.png', dpi=300)
+# plt.savefig('./figs/trace_Rd.png', dpi=300)
 
 plt.figure(figsize=(5,4.5))
 plt.plot(samples[:,2])
 plt.xlabel('Iteration MH')
 plt.ylabel('$C$')
 plt.ylim(C_grid[0], C_grid[-1])
-plt.savefig('./figs/trace_C.png', dpi=300)
+# plt.savefig('./figs/trace_C.png', dpi=300)
 
 plt.figure(figsize=(10,5))
 plt.plot(GR_evolution)
 plt.xlabel('iteration MH')
 plt.ylabel('$GR$')
-plt.savefig('./figs/convergence_GR.png', dpi=300)
+# plt.savefig('./figs/convergence_GR.png', dpi=300)
 # %%
