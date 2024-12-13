@@ -56,7 +56,7 @@ def p_likelihood(y):
     if np.shape(y_obs)[1]>1:
         for i in np.arange(np.shape(y_obs)[1]):
             # add the log likelihoods for the observations
-            y_obs_idx          = np.array([[y_obs[0][0]], [y_obs[1][0]], [y_obs[2][0]]])
+            y_obs_idx          = np.array([[y_obs[0][i]], [y_obs[1][i]], [y_obs[2][i]]])
             p_log_likelihood  += -0.5*np.matmul(np.matmul(np.transpose(y-y_obs_idx),inv_cov),y-y_obs_idx)
         p_likelihood = np.exp(p_log_likelihood)
     else:

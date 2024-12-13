@@ -84,9 +84,9 @@ Rp_mesh, C_mesh, Rd_mesh = np.meshgrid(Rp_grid, C_grid, Rd_grid)
 # s                = sio.loadmat('./data/y_obs.mat')
 # y_no_noise       = s['y_no_noise']
 
-x_coord = 10 # Rp
-y_coord = 8 # C
-z_coord = 25 # Rd
+x_coord = 16 # Rp
+y_coord = 16 # C
+z_coord = 16 # Rd
 
 print(np.array([[Rp_mesh[x_coord, y_coord, z_coord]], [C_mesh[x_coord, y_coord, z_coord]], [Rd_mesh[x_coord, y_coord, z_coord]]]))
 y_no_noise = np.array([[qoi_min[x_coord, y_coord, z_coord]], [qoi_max[x_coord, y_coord, z_coord]], [qoi_mean[x_coord, y_coord, z_coord]]])
@@ -142,7 +142,7 @@ def p_prior(x):
 
 def p_likelihood(y):
     cov_matrix  = np.array([[(sigma_noise_min)**2, 0, 0], [0, (sigma_noise_max)**2, 0], [0, 0, (sigma_noise_mean)**2]])
-    inv_cov     = np.linalg.inv(cov_matrix), np.linalg.det(cov_matrix), np.shape(cov_matrix)[0]
+    inv_cov     = np.linalg.inv(cov_matrix)
     p_log_likelihood     = 0
     if np.shape(y_obs)[1]>1:
         for i in np.arange(np.shape(y_obs)[1]):

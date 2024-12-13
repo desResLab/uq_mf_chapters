@@ -231,9 +231,9 @@ for i in range(num_of_obs):
     epsilon = [[np.random.normal(0, sigma_noise_min)], [np.random.normal(0, sigma_noise_max)], [np.random.normal(0, sigma_noise_mean)]]
 
     if i == 0:
-        y_min  = y_no_noise[0] + epsilon[0]
-        y_max  = y_no_noise[1] + epsilon[1]
-        y_mean = y_no_noise[2] + epsilon[2]
+        y_min  = y_no_noise[0][0] + epsilon[0][0]
+        y_max  = y_no_noise[1][0] + epsilon[1][0]
+        y_mean = y_no_noise[2][0] + epsilon[2][0]
     else:
         y_min  = np.append(y_min, y_no_noise[0][0] + epsilon[0][0])
         y_max  = np.append(y_max,  y_no_noise[1][0] + epsilon[1][0])
@@ -242,7 +242,7 @@ for i in range(num_of_obs):
 y_obs = [y_min, y_max, y_mean]
 
 if num_of_obs > 1:
-    sio.savemat('../data/y_obs_mult.mat', {'y_obs':y_obs, 'epsilon':epsilon, 'y_no_noise':y_no_noise, 'sigma_noise_min':sigma_noise_min, 'sigma_noise_max':sigma_noise_max, 'sigma_noise_mean':sigma_noise_mean})
-# else:
-#     sio.savemat('../data/y_obs.mat', {'y_obs':y_obs, 'epsilon':epsilon, 'y_no_noise':y_no_noise, 'sigma_noise_min':sigma_noise_min, 'sigma_noise_max':sigma_noise_max, 'sigma_noise_mean':sigma_noise_mean})
+    sio.savemat('./data/y_obs_mult.mat', {'y_obs':y_obs, 'epsilon':epsilon, 'y_no_noise':y_no_noise, 'sigma_noise_min':sigma_noise_min, 'sigma_noise_max':sigma_noise_max, 'sigma_noise_mean':sigma_noise_mean})
+else:
+    sio.savemat('../data/y_obs.mat', {'y_obs':y_obs, 'epsilon':epsilon, 'y_no_noise':y_no_noise, 'sigma_noise_min':sigma_noise_min, 'sigma_noise_max':sigma_noise_max, 'sigma_noise_mean':sigma_noise_mean})
 # %%

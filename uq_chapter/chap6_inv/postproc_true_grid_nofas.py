@@ -69,14 +69,14 @@ grid_p_mean    = np.zeros((Rp_mesh.shape[0], Rp_mesh.shape[1], Rp_mesh.shape[2])
 cycleTime   = 1.07
 totalCycles = 10
 
-for i in tqdm(np.arange(Rp_mesh.shape[0])):
-    for j in np.arange(Rp_mesh.shape[1]):
-        for k in np.arange(Rp_mesh.shape[2]):
-            theta = np.array([[Rp_mesh[i,j,k]], [Rd_mesh[i,j,k]], [C_mesh[i,j,k]]])
-            p_all = RCR_sim(theta, cycleTime, totalCycles)
-            grid_p_min[i,j,k] = p_all[0]
-            grid_p_max[i,j,k] = p_all[1]
-            grid_p_mean[i,j,k] = p_all[2]
+# for i in tqdm(np.arange(Rp_mesh.shape[0])):
+#     for j in np.arange(Rp_mesh.shape[1]):
+#         for k in np.arange(Rp_mesh.shape[2]):
+#             theta = np.array([[Rp_mesh[i,j,k]], [Rd_mesh[i,j,k]], [C_mesh[i,j,k]]])
+#             p_all = RCR_sim(theta, cycleTime, totalCycles)
+#             grid_p_min[i,j,k] = p_all[0]
+#             grid_p_max[i,j,k] = p_all[1]
+#             grid_p_mean[i,j,k] = p_all[2]
 
 # sio.savemat('./grid_RCR_pressures_nofas.mat', {'Rp_mesh': Rp_mesh, 'Rd_mesh': Rd_mesh, 'C_mesh': C_mesh, 'grid_p_min': grid_p_min, 'grid_p_max': grid_p_max, 'grid_p_mean': grid_p_mean})
 
