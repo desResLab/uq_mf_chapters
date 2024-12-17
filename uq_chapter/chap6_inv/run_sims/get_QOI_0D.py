@@ -26,4 +26,4 @@ def get_QOI_0D(filename, QOI_name=None):
     pressure_min  = min(zerod_data['aorta:pressure_in'])
     pressure_mean = np.mean(zerod_data['aorta:pressure_in'])
 
-    return [[pressure_max], [pressure_min], [pressure_mean]]
+    return [[pressure_min], [pressure_max], [pressure_mean]]

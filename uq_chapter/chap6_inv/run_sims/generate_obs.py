@@ -218,7 +218,7 @@ y_no_noise = get_QOI_0D(filename)
 
 #%% Add noise to the output
 
-num_of_obs = 50
+num_of_obs = 1
 
 scaling_factor   = [0.01, 0.01, 0.01]
 
@@ -239,10 +239,10 @@ for i in range(num_of_obs):
         y_max  = np.append(y_max,  y_no_noise[1][0] + epsilon[1][0])
         y_mean = np.append(y_mean, y_no_noise[2][0] + epsilon[2][0])
 
-y_obs = [y_min, y_max, y_mean]
-
 if num_of_obs > 1:
+    y_obs = [y_min, y_max, y_mean]
     sio.savemat('./data/y_obs_mult.mat', {'y_obs':y_obs, 'epsilon':epsilon, 'y_no_noise':y_no_noise, 'sigma_noise_min':sigma_noise_min, 'sigma_noise_max':sigma_noise_max, 'sigma_noise_mean':sigma_noise_mean})
 else:
-    sio.savemat('../data/y_obs.mat', {'y_obs':y_obs, 'epsilon':epsilon, 'y_no_noise':y_no_noise, 'sigma_noise_min':sigma_noise_min, 'sigma_noise_max':sigma_noise_max, 'sigma_noise_mean':sigma_noise_mean})
+    y_obs = [[y_min], [y_max], [y_mean]]
+    sio.savemat('./data/y_obs.mat', {'y_obs':y_obs, 'epsilon':epsilon, 'y_no_noise':y_no_noise, 'sigma_noise_min':sigma_noise_min, 'sigma_noise_max':sigma_noise_max, 'sigma_noise_mean':sigma_noise_mean})
 # %%

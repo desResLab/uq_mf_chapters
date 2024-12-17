@@ -100,7 +100,7 @@ def p_likelihood(y):
         for i in np.arange(np.shape(y_obs)[1]):
             # add the log likelihoods for the observations
             y_obs_idx          = np.array([[y_obs[0,i]], [y_obs[1,i]], [y_obs[2,i]]])
-            p_log_likelihood  += np.log((2*np.pi)**(-k/2) * det_cov**(-1/2) * np.exp(-0.5*np.matmul(np.matmul(np.transpose(y-y_obs_idx),inv_cov),y-y_obs_idx)))
+            p_log_likelihood  += -0.5*np.matmul(np.matmul(np.transpose(y-y_obs_idx),inv_cov),y-y_obs_idx)
         p_likelihood = np.exp(p_log_likelihood)
     else:
         p_likelihood = (2*np.pi)**(-k/2) * det_cov**(-1/2) * np.exp(-0.5*np.matmul(np.matmul(np.transpose(y-y_obs),inv_cov),y-y_obs))
@@ -174,19 +174,19 @@ fig, ax = plt.subplots(1, 3, figsize=(12,3), gridspec_kw={'width_ratios': [1, 1,
 
 slice_idx = 0
 
-cbar_a = ax[0].contourf(Rp_grid, C_grid, marginal_CRp.T)
+cbar_a = ax[0].contour(Rp_grid, C_grid, marginal_CRp.T)
 # ax[0].contour(Rp_grid, C_grid, prior_CRp.T, colors='y', linestyles='--')
 ax[0].set_xlabel('$R_p$')
 ax[0].set_ylabel('$C$')
 
-cbar_b = ax[1].contourf(Rp_grid, Rd_grid, marginal_RpRd)
+cbar_b = ax[1].contour(Rp_grid, Rd_grid, marginal_RpRd)
 # ax[1].contour(Rp_grid, Rd_grid, prior_RpRd.T, colors='y', linestyles='--')
 ax[1].set_xlabel('$R_p$')
 ax[1].set_ylabel('$R_d$')
 # ax[1].set_ylim([25000, 28000])
 # ax[1].set_xlim([Rp_low, 1000])
 
-cbar_c = ax[2].contourf(Rd_grid, C_grid, marginal_CRd.T)
+cbar_c = ax[2].contour(Rd_grid, C_grid, marginal_CRd.T)
 # ax[2].contour(Rd_grid, C_grid, prior_CRd, colors='y', linestyles='--')
 ax[2].set_xlabel('$R_d$')
 ax[2].set_ylabel('$C$')

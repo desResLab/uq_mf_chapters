@@ -98,7 +98,7 @@ y_no_noise = np.array([[qoi_min[x_coord, y_coord, z_coord]], [qoi_max[x_coord, y
 # epsilon = [[np.random.normal(0, sigma_noise_min)], [np.random.normal(0, sigma_noise_max)], [np.random.normal(0, sigma_noise_mean)]]
 # y_obs = np.array([[y_no_noise[0][0] + epsilon[0][0]], [y_no_noise[1][0] + epsilon[1][0]], [y_no_noise[2][0] + epsilon[2][0]]])
 
-num_of_obs = 50
+num_of_obs = 1
 
 scaling_factor   = [0.01, 0.01, 0.01]
 
