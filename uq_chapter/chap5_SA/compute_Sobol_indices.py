@@ -26,16 +26,19 @@ from sklearn.metrics import r2_score
 
 #%% Data
 
-save = False
+save = True
 only_SA = False
 
-QoI = 'flow:aorta:avg'
+QoI = 'pressure:aorta:amp'
+# QoI = 'flow:aorta:max'
 if QoI[-3:] == 'avg':
     end = 'average'
 elif QoI[-3:] == 'min':
     end = 'minimum'
 elif QoI[-3:] == 'max':
     end = 'maximum'
+elif QoI[-3:] == 'amp':
+    end = 'amplitude of'
 if QoI[:4] == 'flow':
     title = "WSS at " + end + " flow rate"
 elif QoI[:8] == 'pressure':
@@ -93,8 +96,14 @@ if QoI[:4] == 'flow':
     wss_aorta = (4*mu*flow_aorta)/(np.pi*(r_aorta**3))
     quantity = wss_aorta
 elif QoI[:8] == 'pressure':
-    pressure_aorta = np.array(list(QOI_table.loc[QoI]))
-    quantity = pressure_aorta
+    if QoI[15:] == 'amp':
+        pressure_max = np.array(list(QOI_table.loc[QoI[:15]+'max']))
+        pressure_min = np.array(list(QOI_table.loc[QoI[:15]+'min']))
+        quantity = pressure_max - pressure_min
+    else:
+        pressure_aorta = np.array(list(QOI_table.loc[QoI]))
+        quantity = pressure_aorta
+
 
 Si = sobol.analyze(problem, quantity)
 
@@ -105,6 +114,8 @@ variable_names = [r"$R_p$", r"$C$", r"$R_d$"]
 # round to 2 decimal places
 indices_1 = np.around(Si['S1'], decimals=2)
 indices_T = np.around(Si['ST'], decimals=2)
+
+#%%
 
 fig, ax = plt.subplots(figsize=(2.4,1.6))
 width = 0.2
@@ -135,7 +146,7 @@ bar_indices_T = ax.bar(
     
 #% PCE sensitivity analysis using UQpy (Section 5.3, Figure 6)
 
-degree = 10
+degree = 9
 
 marg = [Uniform(loc=Rp_a, scale=Rp_b-Rp_a), Uniform(loc=C_a, scale=C_b-C_a), Uniform(loc=Rd_a, scale=Rd_b-Rd_a)]
 dist = JointIndependent(marginals=marg)
@@ -150,8 +161,13 @@ if QoI[:4] == 'flow':
     wss_aorta = (4*mu*flow_aorta)/(np.pi*(r_aorta**3))
     quantity = wss_aorta
 elif QoI[:8] == 'pressure':
-    pressure_aorta = np.array(list(QOI_table.loc[QoI]))
-    quantity = pressure_aorta
+    if QoI[15:] == 'amp':
+        pressure_max = np.array(list(QOI_table.loc[QoI[:15]+'max']))
+        pressure_min = np.array(list(QOI_table.loc[QoI[:15]+'min']))
+        quantity = pressure_max - pressure_min
+    else:
+        pressure_aorta = np.array(list(QOI_table.loc[QoI]))
+        quantity = pressure_aorta
 
 polynomial_basis = TotalDegreeBasis(dist, degree)
 regression = LeastSquareRegression()
@@ -218,3 +234,4 @@ plt.title(title)
 #plt.show()
 if save:
     plt.savefig("figures/SA_QOI_" + QoI.replace(':','_') + "_horizontal.png")
+# %%

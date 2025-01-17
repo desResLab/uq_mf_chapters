@@ -21,8 +21,13 @@ Rp = np.random.uniform(Rp-Rp_bounds*Rp, Rp+Rp_bounds*Rp)
 C  = np.random.uniform(C-C_bounds*C,    C+C_bounds*C)
 Rd = np.random.uniform(Rd-Rd_bounds*Rd, Rd+Rd_bounds*Rd)
 
+# used in the chapter
+# Rp = 6.70242419e2
+# C  = 3.13418065e-5
+# Rd = 3.25136290e4
+
 # save the RCR values
-# sio.savemat(dirpath+'data/x_obs.mat', {'Rp':Rp, 'C':C, 'Rd':Rd})
+sio.savemat(dirpath+'data/x_obs.mat', {'Rp':Rp, 'C':C, 'Rd':Rd})
 
 #%% Generate svZeroDSolver input file
 import pandas as pd
@@ -208,9 +213,9 @@ def get_QOI_0D(filename, QOI_name=None):
     pressure_aorta = zerod_data['aorta:pressure_in']
     import matplotlib.pyplot as plt
     plt.plot(pressure_aorta)
-    print(np.mean(pressure_aorta))
-    print(np.max(pressure_aorta))
-    print(np.min(pressure_aorta))
+    print(np.mean(pressure_aorta)/1333)
+    print(np.max(pressure_aorta)/1333)
+    print(np.min(pressure_aorta)/1333)
 
     return torch.tensor([[min(pressure_aorta)], [max(pressure_aorta)], [np.mean(pressure_aorta)]])
 
@@ -218,9 +223,9 @@ y_no_noise = get_QOI_0D(filename)
 
 #%% Add noise to the output
 
-num_of_obs = 1
+num_of_obs = 50
 
-scaling_factor   = [0.01, 0.01, 0.01]
+scaling_factor   = [0.05, 0.05, 0.05]
 
 sigma_noise_min  = y_no_noise[0][0]*scaling_factor[0]
 sigma_noise_max  = y_no_noise[1][0]*scaling_factor[1]
@@ -241,8 +246,8 @@ for i in range(num_of_obs):
 
 if num_of_obs > 1:
     y_obs = [y_min, y_max, y_mean]
-    sio.savemat('./data/y_obs_mult.mat', {'y_obs':y_obs, 'epsilon':epsilon, 'y_no_noise':y_no_noise, 'sigma_noise_min':sigma_noise_min, 'sigma_noise_max':sigma_noise_max, 'sigma_noise_mean':sigma_noise_mean})
+    sio.savemat('../data/y_obs_mult.mat', {'y_obs':y_obs, 'epsilon':epsilon, 'y_no_noise':y_no_noise, 'sigma_noise_min':sigma_noise_min, 'sigma_noise_max':sigma_noise_max, 'sigma_noise_mean':sigma_noise_mean})
 else:
     y_obs = [[y_min], [y_max], [y_mean]]
-    sio.savemat('./data/y_obs.mat', {'y_obs':y_obs, 'epsilon':epsilon, 'y_no_noise':y_no_noise, 'sigma_noise_min':sigma_noise_min, 'sigma_noise_max':sigma_noise_max, 'sigma_noise_mean':sigma_noise_mean})
+    sio.savemat('../data/y_obs.mat', {'y_obs':y_obs, 'epsilon':epsilon, 'y_no_noise':y_no_noise, 'sigma_noise_min':sigma_noise_min, 'sigma_noise_max':sigma_noise_max, 'sigma_noise_mean':sigma_noise_mean})
 # %%

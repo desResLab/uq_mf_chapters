@@ -11,7 +11,7 @@ s_tot           = 100                   # total number of experiments
 d               = '0'                   # dimension of solver
 steps_per_cycle = 10000                 # number of steps per cycle in the solver
 
-name            = 'flow:aorta:avg'      # quantity of interest
+name            = 'pressure:aorta:max'      # quantity of interest
 mu              = 0.04                  # blood viscosity
 r_poiseuille    = 1.019478928           # radius of aorta
 
@@ -33,14 +33,16 @@ for N in [2**6, 2**7, 2**8, 2**9]:
 
         # Compute Q_mc of the QOI
         idxs    = np.nonzero(var_names == name)[0]
-        wss     = 4*mu*data[idxs,:]/(np.pi*r_poiseuille**3)
-        Q_mc[s] = np.sum(wss)/N
+        # wss     = 4*mu*data[idxs,:]/(np.pi*r_poiseuille**3)
+        # Q_mc[s] = np.sum(wss)/N
+        Q_mc[s] = np.sum(data[idxs,:])/N
+        # print(np.sum(data[idxs,:])/N)
 
     # Compute the associated variance
     var[vidx] = np.var(Q_mc)
     vidx += 1
 
-    # Save the results to a new file
+#     # Save the results to a new file
     sio.savemat("./data/QOI_" + d + "D_N" + str(N) + ".mat", {'Q_mc': Q_mc})
 
 sio.savemat("./data/vars_" + d + "D.mat", {'var': var})
@@ -88,8 +90,8 @@ for i in range(0,4):
     s = sio.loadmat(figs_path + "QOI_" + d + "D_N" + str(N_tot[i]) + ".mat")
     Q_mc = s['Q_mc']
     ax[0].plot(x, stats.norm.pdf(x, np.mean(Q_mc), np.std(Q_mc)),linewidth=2.5, color=colors[i % len(colors)])
-    if i == 0:
-        ax[0].set_xlim(0.3612, 0.3627)
+    # if i == 0:
+    #     ax[0].set_xlim(0.3612, 0.3627)
 ax[0].set_xlabel('$\widehat{Q}_{\mathrm{MC}}$', fontsize=fs,  labelpad=8)
 ax[0].set_title('PDF')
 ax[0].legend(['$N=64$', '$N=128$', '$N=256$', '$N=512$'])
@@ -100,7 +102,7 @@ for var_idx in np.arange(0,4):
     # plot the variance reduction
     ax[1].loglog(N_tot, np.transpose(var), 'k--', label='_nolegend_')
     ax[1].loglog(N_tot[var_idx], np.transpose(var)[var_idx], 'o', ms=10)
-ax[1].loglog(N_tot, 1/np.array(N_tot)/1e5, color='purple')
+ax[1].loglog(N_tot, 1/np.array(N_tot)*5e8, color='purple')
 
 ax[1].legend(['$N=64$', '$N=128$', '$N=256$', '$N=512$', '$\sim 1/N$'])
 ax[1].minorticks_off()
@@ -113,5 +115,6 @@ ax[1].set_title('$\log(\sigma^2)$')
 fig.set_figwidth(12)
 fig.set_figheight(6)
 
-plt.savefig(figs_path+ "mc_" + d + "D_aobif.png", dpi=300)
-plt.close()
+# plt.savefig(figs_path+ "mc_" + d + "D_aobif.png", dpi=300)
+# plt.close()
+# %%
