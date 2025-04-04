@@ -56,8 +56,9 @@ C_b = C + C_bounds*C
 Rd_a = Rd - Rd_bounds*Rd
 Rd_b = Rd + Rd_bounds*Rd
 
-mu = 0.04
-r_aorta = 1.019478928
+mu          = 0.04
+r_aorta     = 1.019478928
+mmhg_to_cgs = 1/1333.22
 
 #%% Plot settings 
 
@@ -108,17 +109,17 @@ for degree in [1,9]:
     
     r2 = r2_score(quantity_test, quantity_test_pce)
     plt.figure(figsize=(3.6,2.4))
-    plt.scatter(quantity_test, quantity_test_pce, label='samples', s=8)
-    plt.plot(quantity_test, quantity_test, color='red', label='identity', linewidth=1)
+    plt.scatter(quantity_test*mmhg_to_cgs, quantity_test_pce*mmhg_to_cgs, label='samples', s=8)
+    plt.plot(quantity_test*mmhg_to_cgs, quantity_test*mmhg_to_cgs, color='red', label='identity', linewidth=1)
     plt.xlabel('Exact')
     plt.ylabel('PCE')
-    plt.title(title + "\nDegree " + str(degree) + ", $R^2 = " + str(round(r2, 3)) + "$")
+    plt.title(title + " (mmHg) \nDegree " + str(degree) + ", $R^2 = " + str(round(r2, 3)) + "$")
     plt.legend()
     #plt.show()
     if save:
         if not os.path.exists("./figures"):
             os.mkdir("./figures")
-        plt.savefig("./figures/PCE_scatter_degree" + str(degree) + "_QOI_" + QoI.replace(':','_') + ".png", bbox_inches = 'tight')
+        plt.savefig("./figures/PCE_scatter_degree" + str(degree) + "_QOI_" + QoI.replace(':','_') + "_mmhg.png", bbox_inches = 'tight')
 
 #%% Plot Figure 4 from Section 4.3: Polynomial Chaos expansion using UQpy
 
