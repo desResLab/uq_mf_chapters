@@ -1,0 +1,6 @@
+./01_simulation_svFSI
+./Estimating_statistics
+./MFMC_1D_model_statistics_estimate
+./MFMC_1D_model_UQSA_budget_200_S_pm10percent
+./Simulation_Folder
+*.pkl

@@ -1,0 +1,44 @@
+Functions needed for each model
+
+
+class Model():
+
+    def __init__(self, model_specific_parameters):
+
+    def run_simulation(self):
+        return simulation_data
+
+    def load_data(self, samples):
+        # load existing data
+        # extract QoIs
+        return QoI_values
+
+    def extract_QoI(self, simulation_data):
+        return QoI_values
+
+    def run_UQSA_case(self):
+        # generate model
+        # run model for all cases
+        # extract QoIs
+        retun QoI_values
+
+    def mfmc(self, A, B, C_BA, case_definition, QoIs):
+        # check if solution file already exists
+        # load solution or compute solutions & save solution
+        return solutions_Y_A_B_BA
+
+    def mfmc_solution_computation(self, A, B, C_BA, Y, QoIs, case_definition):
+        # compute the model solutions for each matrix
+        return solutions_Y_A_B_BA
+
+    def mfmc_solution_computation_Y_A(self, A):
+        # compute the model solutions for A matrx
+        return Y_A
+
+    def mfmc_solution_computation_Y_A(self, B):
+        # compute the model solutions for B matrx
+        return Y_B
+
+    def mfmc_solution_computation_Y_BA(self, BA):
+        # compute the model solutions for C_BA matrx
+        return Y_BA

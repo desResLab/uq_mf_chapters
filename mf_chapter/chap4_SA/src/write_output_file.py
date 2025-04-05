@@ -1,0 +1,86 @@
+import numpy as np
+
+def write_output_file(sensitivity_dict, txt_file, m, alpha, sampling, costs, end_time):
+    QoIs = list(sensitivity_dict.keys())
+    n_models = sensitivity_dict[QoIs[0]]['sf_sm'].keys().__len__()
+
+    file = open(txt_file, 'w')
+    file.write('************************************************************\n')
+    file.write("Sampling: " + sampling + '\n')
+    file.write("Costs: " + str(costs) + '\n')
+    file.write("Simulation time: " + str(end_time) + '\n')
+    file.write("\n")
+    for QoI in QoIs:
+        file.write(QoI)
+        file.write("\n")
+        file.write('Model evaluations per fidelity level\n')
+        file.write(str(m[QoI]))
+        file.write("\n")
+        file.write('alpha\n')
+        file.write(str(alpha[QoI]))
+        file.write("\n")
+        file.write("\n")
+    file.write('************************************************************\n')
+    for QoI in QoIs:
+        file.write(QoI)
+        file.write("\n")
+        file.write('Main MF Sensitvity index \n')
+        file.write(str(sensitivity_dict[QoI]['mf_sm']))
+        file.write("\n")
+        file.write("\n")
+        file.write('Total MF Sensitvity index \n')
+        file.write(str(sensitivity_dict[QoI]['mf_st']))
+        file.write("\n")
+        file.write("\n")
+        file.write('Intermediate main sensitvity index - single fidelity\n')
+        for level in range(n_models):
+            file.write(str(sensitivity_dict[QoI]['sf_sm'][level]))
+            file.write("\n")
+        file.write("\n")
+        file.write('Intermediate total sensitvity index  - single fidelity\n')
+        for level in range(n_models):
+            file.write(str(sensitivity_dict[QoI]['sf_st'][level]))
+            file.write("\n")
+        file.write("\n")
+        file.write(
+            'Intermediate main sensitvity index for low fidelity models with samples from higher fidelity model\n')
+        for level in range(n_models - 1):
+            file.write(str(sensitivity_dict[QoI]['hl_sm'][level + 1]))
+            file.write("\n")
+        file.write("\n")
+        file.write(
+            'Intermediate total sensitvity index for low fidelity models with samples from higher fidelity model\n')
+        for level in range(n_models - 1):
+            file.write(str(sensitivity_dict[QoI]['hl_st'][level + 1]))
+            file.write("\n")
+        file.write("\n")
+        file.write('Multifidelity mean estimate\n')
+        file.write(str(sensitivity_dict[QoI]['mf_mu']))
+        file.write("\n")
+        file.write("\n")
+        file.write('Mean estimate of each fidelity level\n')
+        for level in range(n_models):
+            file.write(str(sensitivity_dict[QoI]['sf_mu'][level]))
+            file.write("\n")
+        file.write("\n")
+        file.write('Mean estimate for low fidelity models with samples from higher fidelity model\n')
+        for level in range(n_models - 1):
+            file.write(str(sensitivity_dict[QoI]['hl_mu'][level+1]))
+            file.write("\n")
+        file.write("\n")
+        file.write('Multifidelity standard deviation estimate\n')
+        file.write(str(np.sqrt(np.abs(sensitivity_dict[QoI]['mf_var']))))
+        file.write("\n")
+        file.write("\n")
+        file.write('Standard deviation estimate of each fidelity level\n')
+        for level in range(n_models):
+            file.write(str(np.sqrt(sensitivity_dict[QoI]['sf_var'][level])))
+            file.write("\n")
+        file.write("\n")
+        file.write('Standard deviation estimate for low fidelity models with samples from higher fidelity model\n')
+        for level in range(n_models - 1):
+            file.write(str(np.sqrt(sensitivity_dict[QoI]['hl_var'][level + 1])))
+            file.write("\n")
+        file.write("\n")
+        file.write('************************************************************\n')
+    file.close()
