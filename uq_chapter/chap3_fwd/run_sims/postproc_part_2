@@ -1,0 +1,60 @@
+#!/bin/bash
+
+# Name of your job
+#SBATCH --job-name=uqChap_N_avg
+
+# Name of partition
+#SBATCH --partition=amarsden
+
+# Specify the name of the output file. The %j specifies the job ID
+#SBATCH --output=uqChap_N_avg.o%j
+
+# Specify a name of the error file. The %j specifies the job ID
+#SBATCH --error=uqChap_N_avg.e%j
+
+# The walltime you require for your simulation
+#SBATCH --time=48:00:00
+
+# Job priority. Leave as normal for now.
+#SBATCH --qos=normal
+
+# Number of nodes you are requesting for your job. You can have 16 processors per node, so plan accordingly
+#SBATCH --nodes=1
+
+# Amount of memory you require per node. The default is 4000 MB (or 4 GB) per node
+#SBATCH --mem=20000
+
+# Number of processors per node
+#SBATCH --ntasks-per-node=24
+
+# Send an email to this address when you job starts and finishes
+#SBATCH --mail-user=chloe1@stanford.edu
+#SBATCH --mail-type=begin
+#SBATCH --mail-type=fail
+#SBATCH --mail-type=end
+
+# Load Modules
+module purge
+module load devel
+module load gcc/14.2.0
+module load openmpi
+module load openblas
+module load system
+module load x11
+module load mesa
+module load swig
+module load boost
+module load armadillo
+
+# Clean simulation directory
+# make clean
+
+echo Start time: $(date)
+
+source /home/groups/amarsden/anaconda3/bin/activate
+
+for exp in {0..99}; do
+    python /scratch/users/chloe1/postproc_uq/uq_chapter_get_N_avg.py $exp
+done
+
+echo End time: $(date)

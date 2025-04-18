@@ -26,19 +26,19 @@ from sklearn.metrics import r2_score
 
 #%% Data
 
-save = True
+save    = False
 only_SA = False
 
-QoI = 'pressure:aorta:amp'
+QoI = 'pressure:aorta:max' #min, max, avg, pulse
 # QoI = 'flow:aorta:max'
 if QoI[-3:] == 'avg':
-    end = 'average'
+    end = 'mean'
 elif QoI[-3:] == 'min':
-    end = 'minimum'
+    end = 'diastolic'
 elif QoI[-3:] == 'max':
-    end = 'maximum'
-elif QoI[-3:] == 'amp':
-    end = 'amplitude of'
+    end = 'systolic'
+elif QoI[-5:] == 'pulse':
+    end = 'pulse'
 if QoI[:4] == 'flow':
     title = "WSS at " + end + " flow rate"
 elif QoI[:8] == 'pressure':
@@ -68,11 +68,14 @@ r_aorta = 1.019478928
 
 #%% Plot settings 
 
-fs = 10
+fs = 16
 plt.rc('font',  family='serif', size=fs)
 plt.rc('text',  usetex=True)
 plt.rc('xtick', labelsize='small')
 plt.rc('ytick', labelsize='small')
+plt.rcParams['xtick.labelsize'] = fs+2
+plt.rcParams['ytick.labelsize'] = fs+2
+plt.rcParams['axes.titlesize'] = fs+2
 plt.rcParams['figure.dpi'] = 300
 
 
@@ -96,7 +99,7 @@ if QoI[:4] == 'flow':
     wss_aorta = (4*mu*flow_aorta)/(np.pi*(r_aorta**3))
     quantity = wss_aorta
 elif QoI[:8] == 'pressure':
-    if QoI[15:] == 'amp':
+    if QoI[15:] == 'pulse':
         pressure_max = np.array(list(QOI_table.loc[QoI[:15]+'max']))
         pressure_min = np.array(list(QOI_table.loc[QoI[:15]+'min']))
         quantity = pressure_max - pressure_min
@@ -109,7 +112,8 @@ Si = sobol.analyze(problem, quantity)
 
 num_vars = 3
 _idx = np.arange(num_vars)
-variable_names = [r"$R_p$", r"$C$", r"$R_d$"]
+variable_names = ["$R_p$", "$C$", "$R_d$"]
+# variable_names = ["$R_p$ \n (dyne$\cdot$s/cm$^5$)", "$C$ \n (cm$^5$/dyne)", "$R_d$ \n (dyne$\cdot$s/cm$^5$)"]
 
 # round to 2 decimal places
 indices_1 = np.around(Si['S1'], decimals=2)
@@ -161,7 +165,7 @@ if QoI[:4] == 'flow':
     wss_aorta = (4*mu*flow_aorta)/(np.pi*(r_aorta**3))
     quantity = wss_aorta
 elif QoI[:8] == 'pressure':
-    if QoI[15:] == 'amp':
+    if QoI[15:] == 'pulse':
         pressure_max = np.array(list(QOI_table.loc[QoI[:15]+'max']))
         pressure_min = np.array(list(QOI_table.loc[QoI[:15]+'min']))
         quantity = pressure_max - pressure_min
@@ -226,7 +230,7 @@ bar_indices_T_PCE = ax.bar(
 
 ax.set_xticks(_idx, variable_names)
 ax.set_yticks(np.array([0, 0.5, 1]))
-ax.set_xlabel("RCR boundary conditions")
+ax.set_xlabel("RCR BCs")
 ticks =  ax.get_yticks()
 ax.set_yticklabels([abs(tick) for tick in ticks])
 plt.title(title)

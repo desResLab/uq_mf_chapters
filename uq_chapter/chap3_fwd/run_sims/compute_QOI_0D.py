@@ -23,16 +23,16 @@ def get_QOI_0D(filename, QOI_name=None):
     for name in vessel_names:
         idxs = np.nonzero(var_names == name)[0]
         zerod_data[name+':flow_out'] = (data[idxs,1])[-steps_per_cycle:]
-        zerod_data[name+':pressure_out'] = (data[idxs,3])[-steps_per_cycle:]
+        zerod_data[name+':pressure_in'] = (data[idxs,2])[-steps_per_cycle:]
 
     flow_aorta = zerod_data['aorta:flow_out']
-    pressure_aorta = zerod_data['aorta:pressure_out']
+    pressure_aorta = zerod_data['aorta:pressure_in']
 
     flow_left     = zerod_data['left_iliac:flow_out']
-    pressure_left = zerod_data['left_iliac:pressure_out']
+    pressure_left = zerod_data['left_iliac:pressure_in']
 
     flow_right     = zerod_data['right_iliac:flow_out']
-    pressure_right = zerod_data['right_iliac:pressure_out']
+    pressure_right = zerod_data['right_iliac:pressure_in']
         
     QOI = {}
 

@@ -11,37 +11,30 @@ import matplotlib.pyplot as plt
 import statistics
 from tqdm import tqdm
 
-#%% Load the truth data for comparison
-
-#zerod_filepath  = '/Users/chloe/Desktop/grid_0D/'
-zerod_filepath  = './grid_0D/'
-load_truth      = sio.loadmat(zerod_filepath+'marginal_CRp.mat')
-marginal_CRp    = load_truth['marginal_CRp']
-marginal_RpRd   = load_truth['marginal_RpRd']
-marginal_CRd    = load_truth['marginal_CRd']
-marginal_Rp     = np.squeeze(load_truth['marginal_Rp'])
-marginal_C      = np.squeeze(load_truth['marginal_C'])
-marginal_Rd     = np.squeeze(load_truth['marginal_Rd'])
-prior_Rp        = np.squeeze(load_truth['prior_Rp'])
-prior_C         = np.squeeze(load_truth['prior_C'])
-prior_Rd        = np.squeeze(load_truth['prior_Rd'])
-
 #%% Plot Figure 9 in the UQ chapter
 
 Rp_obs = 670.242419
 Rd_obs = 32513.629
 C_obs  = 3.13418065e-5
 
-burnin_size = 2000
+burnin_size = 1000
 dim         = 3
 # file_path   = '/Users/chloe/Desktop/'
 file_path = './data/'
+
+fs = 21
 
 plt.rcParams.update({
     "text.usetex": True,
     "font.family": "serif",
     "font.serif": ["Times New Roman"],
-    "font.size": 18
+    "font.size": fs,
+    "axes.titlesize": fs,
+    "axes.labelsize": fs,
+    "xtick.labelsize": fs,
+    "ytick.labelsize": fs,
+    "legend.fontsize": fs-2,
+    "figure.titlesize": fs,
 })
 
 num_obs = 'one_obs'
@@ -50,9 +43,7 @@ for i in range(1,6+1): #range(6,6+1) for the paper
 
     print(i)
 
-    # filename   = sio.loadmat(file_path+'chains_var_div10/chain_'+str(i)+'.mat')
-    # filename = sio.loadmat(file_path+'chain_'+str(i)+'.mat')
-    filename = sio.loadmat('./'+num_obs+'/chain_'+str(i)+'/mh_sim.mat')
+    filename = sio.loadmat(file_path+'chain_'+str(i)+'.mat')
     n_accepted = filename['n_accepted']
     samples    = filename['samples']
     samples    = np.squeeze(samples)
@@ -86,19 +77,10 @@ for i in range(1,6+1): #range(6,6+1) for the paper
     C_grid  = np.linspace(C_orig-C_orig*RCR_bounds_grid[1], C_orig+C_orig*RCR_bounds_grid[1], n_points)
     Rd_grid = np.linspace(Rd_orig-Rd_orig*RCR_bounds_grid[2], Rd_orig+Rd_orig*RCR_bounds_grid[2], n_points)
 
-    # MAP computed using the true posterior 2D
-    # map_CRp = np.unravel_index(np.argmax(marginal_CRp), marginal_CRp.shape)
-    # map_RpRd = np.unravel_index(np.argmax(marginal_RpRd), marginal_RpRd.shape)
-    # map_CRd = np.unravel_index(np.argmax(marginal_CRd), marginal_CRd.shape)
-
     # dim=0 is Rp, dim=2 is C
     cbar_a = ax[0].hexbin(samples[:,0], samples[:,2], mincnt=1, cmap='rainbow', label='_nolegend_')
-    # ax[0].contour(Rp_grid, C_grid, marginal_CRp, cmap='afmhot')
-    # CHOOSE WHICH MAP FROM THE SECTION BELOW
-    # map0=ax[0].scatter(Rp_grid[map_CRp[1]], C_grid[map_CRp[0]], s=150, marker=(5,1), color='red', zorder=2)    
-    # ax[0].legend([map0],['MAP'], loc='lower left')
-    ax[0].set_xlabel('$R_p$')
-    ax[0].set_ylabel('$C$')
+    ax[0].set_xlabel(r'$R_p$ ($\mathrm{dyne} \cdot \mathrm{s}/\mathrm{cm}^2$)')
+    ax[0].set_ylabel(r'$C$ ($\mathrm{cm}^5/\mathrm{dyne}$)')
     x_obs = ax[0].scatter(Rp_obs, C_obs, s=150, marker=(5,1), color='red', zorder=2)
     ax[0].legend(['Obs'], loc='lower left')
     ax[0].set_xlim(Rp_grid[0], Rp_grid[-1])
@@ -106,11 +88,8 @@ for i in range(1,6+1): #range(6,6+1) for the paper
 
     # dim=0 is Rp, dim=1 is Rd
     cbar_b = ax[1].hexbin(samples[:,0],samples[:,1], mincnt=1, cmap='rainbow', label='_nolegend_')
-    # ax[1].contour(Rp_grid, Rd_grid, marginal_RpRd, cmap='afmhot')
-    # map1=ax[1].scatter(Rp_grid[map_RpRd[1]], Rd_grid[map_RpRd[0]], s=150, marker=(5,1), color='red', zorder=2)
-    # ax[1].legend([map1],['MAP'], loc='lower left')
-    ax[1].set_xlabel('$R_p$')
-    ax[1].set_ylabel('$R_d$')
+    ax[1].set_xlabel(r'$R_p$ ($\mathrm{dyne} \cdot \mathrm{s}/\mathrm{cm}^2$)')
+    ax[1].set_ylabel(r'$R_d$ ($\mathrm{dyne} \cdot \mathrm{s}/\mathrm{cm}^2$)')
     x_obs = ax[1].scatter(Rp_obs, Rd_obs, s=150, marker=(5,1), color='red', zorder=2)
     ax[1].legend(['Obs'], loc='lower left')
     ax[1].set_xlim(Rp_grid[0], Rp_grid[-1])
@@ -118,11 +97,8 @@ for i in range(1,6+1): #range(6,6+1) for the paper
 
     # dim=1 is Rd, dim=2 is C
     cbar_c = ax[2].hexbin(samples[:,1],samples[:,2], mincnt=1, cmap='rainbow', label='_nolegend_')
-    # ax[2].contour(Rd_grid, C_grid, marginal_CRd, cmap='afmhot')
-    # map2=ax[2].scatter(Rd_grid[map_CRd[1]], C_grid[map_CRd[0]], s=150, marker=(5,1), color='red', zorder=2)
-    # ax[2].legend([map2],['MAP'], loc='lower left')
-    ax[2].set_xlabel('$R_d$')
-    ax[2].set_ylabel('$C$')
+    ax[2].set_xlabel(r'$R_d$ ($\mathrm{dyne} \cdot \mathrm{s}/\mathrm{cm}^2$)')
+    ax[2].set_ylabel(r'$C$ ($\mathrm{cm}^5/\mathrm{dyne}$)')
     x_obs = ax[2].scatter(Rd_obs, C_obs, s=150, marker=(5,1), color='red', zorder=2)
     ax[2].legend(['Obs'], loc='lower left')
     ax[2].set_xlim(Rd_grid[0], Rd_grid[-1])
@@ -135,33 +111,26 @@ for i in range(1,6+1): #range(6,6+1) for the paper
     # One-dimensional histograms
     ax[3].hist(samples[:,0], density=True, bins=40)
     ax[3].axvline(Rp_obs, color='r', linestyle='--')
-    # ax[3].plot(Rp_grid, marginal_Rp, color='r')
-    # ax[3].plot(Rp_grid, prior_Rp, linestyle='--', color='k')
-    ax[3].set_xlabel('$R_p$')
+    ax[3].set_xlabel(r'$R_p$ ($\mathrm{dyne} \cdot \mathrm{s}/\mathrm{cm}^2$)')
     ax[3].set_xlim(Rp_grid[0], Rp_grid[-1])
     ax[3].legend(['Obs','MH'])
 
     ax[4].hist(samples[:,2], density=True, bins=40)
     ax[4].axvline(C_obs, color='r', linestyle='--')
-    # ax[4].plot(C_grid, marginal_C, color='r')
-    # ax[4].plot(C_grid, prior_C, linestyle='--', color='k')
-    ax[4].set_xlabel('$C$')
+    ax[4].set_xlabel(r'$C$ ($\mathrm{cm}^5/\mathrm{dyne}$)')
     ax[4].set_xlim(C_grid[0], C_grid[-1])
     ax[4].legend(['Obs','MH'])
 
     ax[5].hist(samples[:,1], density=True, bins=40)
     ax[5].axvline(Rd_obs, color='r', linestyle='--')
-    # ax[5].plot(Rd_grid, marginal_Rd, color='r')
-    # ax[5].plot(Rd_grid, prior_Rd, linestyle='--', color='k')
-    ax[5].set_xlabel('$R_d$')
-    # ax[5].legend(['Posterior', 'Prior', 'MH'])
+    ax[5].set_xlabel(r'$R_d$ ($\mathrm{dyne} \cdot \mathrm{s}/\mathrm{cm}^2$)')
     ax[5].set_xlim(Rd_grid[0], Rd_grid[-1])
     ax[5].legend(['Obs','MH'])
 
     fig.get_layout_engine().set(hspace=0.2)
 
-    if i == 6:
-        plt.savefig('./figs/hexbin_and_hist.png', dpi=300)
+    # if i == 6:
+    #     plt.savefig('./figs/hexbin_and_hist.png', dpi=300)
 
 #%% Compute the MAP using various methods
 
@@ -172,13 +141,6 @@ print('From MH samples: ')
 print('Rp = '+str(statistics.mode(samples[:,0])))
 print('C = '+str(statistics.mode(samples[:,2])))
 print('Rd = '+str(statistics.mode(samples[:,1])))
-
-# using the true posterior
-# print(' -----------------')
-# print('From true posterior: ')
-# print('Rp = '+str(Rp_grid[np.argmax(marginal_Rp)]))
-# print('C = '+str(C_grid[np.argmax(marginal_C)]))
-# print('Rd = '+str(Rd_grid[np.argmax(marginal_Rd)]))
 
 # the original mean values
 print(' -----------------')
@@ -214,8 +176,7 @@ sj_squared = np.zeros((J, num_params))
 for i in range(1,J+1):
 
     # filename   = sio.loadmat(file_path+'chains_var_div10/chain_'+str(i)+'.mat')
-    # filename = sio.loadmat(file_path+'chain_'+str(i)+'.mat')
-    filename = sio.loadmat('./'+num_obs+'/chain_'+str(i)+'/mh_sim.mat')
+    filename = sio.loadmat(file_path+'chain_'+str(i)+'.mat')
     n_accepted = filename['n_accepted']
     samples    = filename['samples']
     samples    = np.squeeze(samples)
@@ -265,8 +226,8 @@ for j in range(num_params):
         
         for i in range(1,J+1):
         
-            # filename   = sio.loadmat(file_path+'chain_'+str(i)+'.mat')
-            filename = sio.loadmat('./'+num_obs+'/chain_'+str(i)+'/mh_sim.mat')
+            filename   = sio.loadmat(file_path+'chain_'+str(i)+'.mat')
+            # filename = sio.loadmat('./'+num_obs+'/chain_'+str(i)+'/mh_sim.mat')
             n_accepted = filename['n_accepted']
             samples    = filename['samples']
             samples    = np.squeeze(samples)
@@ -307,19 +268,19 @@ mh_iters = np.arange(1000, 18999)
 
 ax[0].plot(mh_iters, samples[1000:,0])
 ax[0].set_xlabel('MH iterations')
-ax[0].set_title('$R_p$')
+ax[0].set_title(r'$R_p$ ($\mathrm{dyne} \cdot \mathrm{s}/\mathrm{cm}^2$)')
 ax[0].set_xticks([1000, 5000, 10000, 15000])
 # ax[0].set_ylim(Rp_grid[0], Rp_grid[-1])
 
 ax[1].plot(mh_iters, samples[1000:,1])
 ax[1].set_xlabel('MH iterations')
-ax[1].set_title('$R_d$')
+ax[1].set_title(r'$R_d$ ($\mathrm{dyne} \cdot \mathrm{s}/\mathrm{cm}^2$)')
 ax[1].set_xticks([1000, 5000, 10000, 15000])
 ax[1].set_ylim(Rd_grid[0], Rd_grid[-1])
 
 ax[2].plot(mh_iters, samples[1000:,2])
 ax[2].set_xlabel('MH iterations')
-ax[2].set_title('$C$')
+ax[2].set_title(r'$C$ ($\mathrm{cm}^5/\mathrm{dyne}$)')
 ax[2].set_xticks([1000, 5000, 10000, 15000])
 ax[2].set_ylim(C_grid[0], C_grid[-1])
 
